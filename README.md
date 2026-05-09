@@ -11,27 +11,52 @@ Empower creators to build, share, and collaborate on games of all genres — fro
 
 ---
 
+## 🌌 Flagship Project: NEXUS — The Sentient Galaxy
+
+Our headline project is **NEXUS: The Sentient Galaxy**, an open-world space RPG built in Unity that pushes AI integration further than anything in the genre.
+
+**What makes it different:**
+- 🧠 **LLM-driven NPCs** — every alien you meet is backed by an LLM agent with persistent memory across sessions
+- 🪐 **AI-procedural galaxy** — 10,000+ star systems with planets, biomes, lore, and atmospheres generated on demand
+- 🎭 **AI Game Master** — an orchestrator that improvises quests, world events, and tension curves around your playstyle
+- 🦎 **ML-Agents wildlife** — alien fauna trained with reinforcement learning, evolving across generations
+- 🎵 **Adaptive AI music** — per-planet themes generated and remixed on the fly
+- 🎙️ **Voice with aliens** — STT (Whisper) + TTS (ElevenLabs) so you literally talk to NPCs
+- 🌐 **Persistent shared universe** — Photon-networked, civilizations rise and fall while you're offline
+
+**Project location:** `projects/nexus-sentient-galaxy/`
+
+**Backlog:** [100 issues across 10 epics](https://github.com/SJA-Pathway/PlayPath/issues) — `epic:foundation`, `epic:galaxy-gen`, `epic:ai-npc`, `epic:ai-gm`, `epic:ship-combat`, `epic:ecosystem-ml`, `epic:multiplayer`, `epic:ui-ux`, `epic:audio`, `epic:polish-ship`.
+
+---
+
 ## 🧩 Tech Stack
 
-| Layer          | Technology          | Notes                                  |
-|----------------|-------------------|---------------------------------------|
-| Game Engine    | Unity              | 2D/3D game engine, supports C#       |
-| Scripting      | C#                 | Logic and game mechanics              |
-| Cloud Storage  | Firebase / PlayFab | Free cloud storage & player data      |
-| Multiplayer    | Photon / Mirror    | Free networking for multiplayer games |
-| Design / Art   | Blender / GIMP     | Free 3D modeling and graphics tools   |
-| Version Control| GitHub             | Free public repositories              |
+| Layer            | Technology                       | Notes                                       |
+|------------------|----------------------------------|---------------------------------------------|
+| Game Engine      | Unity 2022.3 LTS (URP)           | 2D/3D game engine, supports C#              |
+| Scripting        | C#                               | Logic and game mechanics                    |
+| Cloud Storage    | Firebase / PlayFab               | Free cloud storage & player data            |
+| Multiplayer      | Photon Fusion / PUN 2 / Mirror   | Free networking for multiplayer games       |
+| LLM Providers    | Anthropic / OpenAI               | NPC dialogue, AI Game Master, lore gen      |
+| ML / RL          | Unity ML-Agents                  | Trained alien wildlife and ecosystems       |
+| Voice (STT/TTS)  | Whisper / ElevenLabs             | Voice chat with NPCs                        |
+| AI Music         | Suno / Stable Audio              | Per-planet adaptive themes                  |
+| Audio Middleware | FMOD / Wwise                     | Adaptive soundtrack and mixer snapshots     |
+| Design / Art     | Blender / GIMP                   | Free 3D modeling and graphics tools         |
+| Version Control  | GitHub                           | Free public repositories                    |
 
 ---
 
 ## 💡 Example Mini Projects
-- 🏎️ **RaceArena** – 2D/3D racing game with multiple tracks and vehicles  
-- 🧩 **PuzzleBox** – Logic and puzzle-solving game with levels  
-- ⚔️ **BattleZone** – Multiplayer battle arena with Photon or Mirror  
-- 🏰 **AdventureQuest** – 3D exploration and quest-based game  
-- 🎯 **MiniGamesHub** – Collection of small casual games in one Unity project  
+- 🌌 **NEXUS: The Sentient Galaxy** – AI-powered open-world space RPG (flagship — see above)
+- 🏎️ **RaceArena** – 2D/3D racing game with multiple tracks and vehicles
+- 🧩 **PuzzleBox** – Logic and puzzle-solving game with levels
+- ⚔️ **BattleZone** – Multiplayer battle arena with Photon or Mirror
+- 🏰 **AdventureQuest** – 3D exploration and quest-based game
+- 🎯 **MiniGamesHub** – Collection of small casual games in one Unity project
 
-Each project can live under `/projects/<project-name>` within the same Unity repository.
+Each project lives under `projects/<project-name>` within the same Unity repository.
 
 ---
 
