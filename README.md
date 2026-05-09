@@ -5,9 +5,9 @@
 Built in **Unity** with **C#**. Powered by LLMs, ML-Agents, and a community of open-source creators.
 Hosted under **[PlayPath by SJA Pathway](#-about-playpath)** — a free, open game development platform.
 
-[![Kanban Board](https://img.shields.io/badge/Kanban-100%20issues%20across%2010%20epics-0e1116?style=for-the-badge&logo=github)](https://github.com/SJA-Pathway/PlayPath/issues) [![Project Board](https://img.shields.io/badge/Project-Board-1d76db?style=for-the-badge&logo=github)](https://github.com/SJA-Pathway/PlayPath/projects) [![Unity](https://img.shields.io/badge/Unity-2022.3%20LTS-222c37?style=for-the-badge&logo=unity)](https://unity.com/) [![License](https://img.shields.io/badge/License-Open%20Source-0e8a16?style=for-the-badge)](#)
+[![Kanban Board](https://img.shields.io/badge/Kanban-100%20issues%20across%2010%20epics-0e1116?style=for-the-badge&logo=github)](https://github.com/SJA-Pathway/PlayPath/issues) [![Project Board](https://img.shields.io/badge/Project-Board-1d76db?style=for-the-badge&logo=github)](https://github.com/orgs/SJA-Pathway/projects/2) [![Unity](https://img.shields.io/badge/Unity-2022.3%20LTS-222c37?style=for-the-badge&logo=unity)](https://unity.com/) [![License](https://img.shields.io/badge/License-Open%20Source-0e8a16?style=for-the-badge)](#)
 
-📋 **Track development:** [Kanban Board (Issues view)](https://github.com/SJA-Pathway/PlayPath/issues) · [Project Board (Kanban columns)](https://github.com/SJA-Pathway/PlayPath/projects) · [All Epics](https://github.com/SJA-Pathway/PlayPath/labels)
+📋 **Track development:** [Kanban Board (Issues view)](https://github.com/SJA-Pathway/PlayPath/issues) · [Project Board (Kanban columns)](https://github.com/orgs/SJA-Pathway/projects/2) · [All Epics](https://github.com/SJA-Pathway/PlayPath/labels)
 
 ---
 
