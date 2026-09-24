@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NEXUS Sentient Galaxy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --void: #04060c;
+    --panel: rgba(9, 15, 28, 0.78);
+    --panel-solid: #0a1120;
+    --line: rgba(127, 231, 255, 0.22);
+    --hud: #7fe7ff;
+    --amber: #ffb547;
+    --danger: #ff4d5e;
+    --ok: #6cf0b0;
+    --text: #d6e4f0;
+    --dim: #7c8ea3;
+    --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--void); color: var(--text);
+    font: 14px/1.45 var(--mono); overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+  }
+  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .hud { position: fixed; pointer-events: none; z-index: 2; }
+  .label { font: 500 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+  .panel { background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+  /* top-left: location */
+  #loc { top: calc(14px + env(safe-area-inset-top, 0px)); left: 16px; display: grid; gap: 4px; }
+  #loc .sys { font: 700 22px/1.1 var(--display); letter-spacing: .04em; color: var(--text); }
+  #loc .sub { color: var(--hud); font-size: 12px; }
+
+  /* top-right: vitals */
+  #vitals { top: calc(14px + env(safe-area-inset-top, 0px)); right: 16px; width: 210px; padding: 10px 12px; display: grid; gap: 8px; }
+  .bar { display: grid; grid-template-columns: 58px 1fr 34px; align-items: center; gap: 8px; font-size: 11px; }
+  .bar .track { height: 5px; background: rgba(255,255,255,.08); position: relative; overflow: hidden; }
+  .bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--hud); transition: width .2s; }
+  .bar.hull .fill { background: var(--ok); }
+  .bar.hull.low .fill { background: var(--danger); }
+  .bar .num { text-align: right; font-variant-numeric: tabular-nums; }
+  #credits { display: flex; justify-content: space-between; font-size: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+  #credits b { color: var(--amber); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  /* speed */
+  #speedo { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); text-align: center; display: grid; gap: 2px; }
+  #speedo .v { font: 600 30px/1 var(--display); font-variant-numeric: tabular-nums; color: var(--hud); }
+  #speedo .boost { color: var(--amber); font-size: 10px; letter-spacing: .14em; height: 12px; }
+
+  /* crosshair */
+  #cross { top: 50%; left: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; }
+  #cross::before, #cross::after { content: ""; position: absolute; background: var(--hud); opacity: .7; }
+  #cross::before { left: 12px; top: 0; width: 2px; height: 8px; box-shadow: 0 18px 0 var(--hud); }
+  #cross::after { top: 12px; left: 0; height: 2px; width: 8px; box-shadow: 18px 0 0 var(--hud); }
+
+  /* prompt */
+  #prompt { top: 62%; left: 50%; transform: translateX(-50%); padding: 8px 14px; font-size: 12px; white-space: nowrap; text-align: center; }
+  #prompt b { color: var(--amber); font-weight: 500; }
+  #prompt .pname { font: 600 14px var(--display); color: var(--text); display: block; margin-bottom: 2px; }
+
+  /* codex */
+  #codex { right: 16px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: 300px; padding: 10px 12px; display: grid; gap: 6px; }
+  #codexLog { display: grid; gap: 5px; font-size: 11px; max-height: 150px; overflow: hidden; }
+  #codexLog div { color: var(--dim); }
+  #codexLog div:first-child { color: var(--text); }
+  #codexLog .tag { color: var(--hud); margin-right: 6px; }
+  #codexLog .tag.gm { color: var(--amber); }
+  #codexLog .tag.war { color: var(--danger); }
+
+  /* radar */
+  #radar { left: 16px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: 132px; height: 132px; border-radius: 50%; }
+
+  /* modals */
+  .modal { position: fixed; z-index: 5; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(2,4,9,.55); }
+  .sheet { width: min(560px, 100%); max-height: calc(100% - 32px); overflow: auto; padding: 20px 22px; display: grid; gap: 14px; background: var(--panel-solid); border: 1px solid var(--line); }
+  .sheet h2 { margin: 0; font: 700 24px/1.1 var(--display); letter-spacing: .03em; text-wrap: balance; }
+  .sheet p { margin: 0; color: var(--text); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .spacer { flex: 1; }
+  .chip { font-size: 11px; padding: 3px 8px; border: 1px solid var(--line); color: var(--hud); }
+  .chip.amber { color: var(--amber); border-color: rgba(255,181,71,.35); }
+  .chip.red { color: var(--danger); border-color: rgba(255,77,94,.4); }
+  button, .btn {
+    font: 600 13px/1 var(--display); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--void); background: var(--hud); border: 0; padding: 10px 16px; cursor: pointer;
+  }
+  button.ghost { background: transparent; color: var(--hud); border: 1px solid var(--line); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  button:disabled { opacity: .4; cursor: default; }
+
+  /* start */
+  #start .sheet { width: min(640px, 100%); gap: 18px; }
+  #start .kicker { color: var(--hud); }
+  #start h1 { margin: 0; font: 700 clamp(44px, 11vw, 84px)/.9 var(--display); letter-spacing: .08em; }
+  #start h1 span { display: block; font-size: .28em; letter-spacing: .32em; color: var(--dim); margin-top: 10px; font-weight: 400; }
+  .keys { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 6px 18px; font-size: 12px; color: var(--dim); }
+  .keys kbd { font: 500 11px var(--mono); color: var(--text); border: 1px solid var(--line); padding: 1px 5px; margin-right: 4px; }
+
+  /* comms */
+  #chat { display: grid; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
+  .msg { max-width: 88%; padding: 8px 10px; font-size: 13px; line-height: 1.5; user-select: text; -webkit-user-select: text; }
+  .msg.them { background: rgba(127,231,255,.07); border-left: 2px solid var(--hud); }
+  .msg.me { justify-self: end; background: rgba(255,181,71,.08); border-right: 2px solid var(--amber); }
+  .msg .who { display: block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-bottom: 3px; }
+  #chatForm { display: flex; gap: 8px; }
+  #chatInput { flex: 1; min-width: 0; font: 13px var(--mono); color: var(--text); background: rgba(255,255,255,.04); border: 1px solid var(--line); padding: 9px 10px; user-select: text; -webkit-user-select: text; }
+  .rep { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; font-size: 11px; color: var(--dim); }
+  .rep .track { height: 4px; background: rgba(255,255,255,.08); position: relative; }
+  .rep .fill { position: absolute; top: 0; bottom: 0; left: 50%; background: var(--ok); }
+  .note { font-size: 11px; color: var(--dim); }
+
+  /* map */
+  #mapCanvas { width: 100%; aspect-ratio: 16 / 10; max-width: 100%; background: #03060d; border: 1px solid var(--line); cursor: crosshair; display: block; }
+  #mapSheet { width: min(760px, 100%); }
+
+  /* warp flash */
+  #flash { position: fixed; inset: 0; z-index: 4; pointer-events: none; background: radial-gradient(circle, rgba(200,245,255,.9), rgba(127,231,255,0) 70%); opacity: 0; transition: opacity .35s; }
+  #flash.on { opacity: 1; }
+  #dmg { position: fixed; inset: 0; z-index: 3; pointer-events: none; box-shadow: inset 0 0 120px rgba(255,40,60,.7); opacity: 0; transition: opacity .25s; }
+
+  /* touch */
+  #touch { position: fixed; z-index: 3; inset: auto 0 calc(160px + env(safe-area-inset-bottom, 0px)) 0; display: flex; justify-content: space-between; padding: 0 16px; pointer-events: none; }
+  #touch .pad { display: grid; grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(2, 48px); gap: 6px; pointer-events: auto; }
+  #touch .acts { display: grid; gap: 6px; pointer-events: auto; }
+  #touch button { padding: 0; width: 48px; height: 48px; font-size: 16px; background: rgba(127,231,255,.14); color: var(--hud); border: 1px solid var(--line); }
+  #touch .acts button { width: 76px; font-size: 11px; }
+  #touch button.hot { background: rgba(255,181,71,.25); color: var(--amber); }
+
+  @media (max-width: 720px) {
+    #codex { display: none; }
+    #vitals { width: 170px; }
+    #loc .sys { font-size: 18px; }
+    #radar { width: 104px; height: 104px; }
+  }
+  @media (prefers-reduced-motion: reduce) { #flash { transition: none; } }
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<canvas id="game" aria-label="NEXUS game view"></canvas>
+
+<div id="loc" class="hud">
+  <span class="label">Current system</span>
+  <span class="sys" id="sysName">—</span>
+  <span class="sub" id="sysSub">—</span>
+</div>
+
+<div id="vitals" class="hud panel">
+  <div class="bar hull" id="hullBar"><span class="label">Hull</span><span class="track"><span class="fill" id="hullFill"></span></span><span class="num" id="hullNum">100</span></div>
+  <div class="bar" id="shieldBar"><span class="label">Shield</span><span class="track"><span class="fill" id="shieldFill"></span></span><span class="num" id="shieldNum">100</span></div>
+  <div id="credits"><span class="label">Credits</span><b id="creditNum">0 cr</b></div>
+</div>
+
+<div id="cross" class="hud"></div>
+<div id="prompt" class="hud panel" hidden></div>
+
+<div id="speedo" class="hud">
+  <span class="v" id="speedNum">0</span>
+  <span class="label">km/s</span>
+  <span class="boost" id="boostTag"></span>
+</div>
+
+<canvas id="radar" class="hud" width="264" height="264"></canvas>
+
+<div id="codex" class="hud panel">
+  <span class="label">Codex · live log</span>
+  <div id="codexLog"></div>
+</div>
+
+<div id="flash"></div>
+<div id="dmg"></div>
+
+<div id="touch" hidden>
+  <div class="pad">
+    <span></span><button data-k="KeyW" aria-label="Pitch down">▲</button><span></span>
+    <button data-k="KeyA" aria-label="Turn left">◀</button><button data-k="KeyS" aria-label="Pitch up">▼</button><button data-k="KeyD" aria-label="Turn right">▶</button>
+  </div>
+  <div class="acts">
+    <button data-k="ArrowUp">Thrust</button>
+    <button data-k="ArrowDown">Brake</button>
+    <button data-k="Space" class="hot">Fire</button>
+  </div>
+</div>
+
+<!-- start screen -->
+<div id="start" class="modal">
+  <div class="sheet">
+    <span class="label kicker">PlayPath · web demo build 0.1</span>
+    <h1>NEXUS<span>The Sentient Galaxy</span></h1>
+    <p>You are a lone pilot in a procedurally generated galaxy. Scan worlds, hail the aliens who live on them, fight off pirate drones and jump between star systems. The Game Master watches how you play and sets up events around you.</p>
+    <div class="keys">
+      <span><kbd>↑</kbd><kbd>↓</kbd> throttle</span>
+      <span><kbd>W</kbd><kbd>S</kbd> pitch</span>
+      <span><kbd>A</kbd><kbd>D</kbd> turn</span>
+      <span><kbd>Shift</kbd> boost</span>
+      <span><kbd>Space</kbd> fire lasers</span>
+      <span><kbd>C</kbd> scan planet</span>
+      <span><kbd>T</kbd> hail alien</span>
+      <span><kbd>M</kbd> star map / FTL</span>
+      <span><kbd>N</kbd> mute music</span>
+    </div>
+    <div class="row">
+      <button id="launchBtn">Launch</button>
+      <span class="note">Runs in the browser with WebGL. No install needed.</span>
+    </div>
+  </div>
+</div>
+
+<!-- scan -->
+<div id="scan" class="modal" hidden>
+  <div class="sheet">
+    <span class="label">Planetary scan complete</span>
+    <h2 id="scanTitle"></h2>
+    <div class="row" id="scanChips"></div>
+    <p id="scanLore"></p>
+    <div class="row"><span class="note" id="scanNote"></span><span class="spacer"></span><button id="scanClose">Close</button></div>
+  </div>
+</div>
+
+<!-- comms -->
+<div id="comms" class="modal" hidden>
+  <div class="sheet">
+    <div class="row"><span class="label">Open channel</span><span class="spacer"></span><span class="chip" id="commsFaction"></span></div>
+    <h2 id="commsTitle"></h2>
+    <div class="rep"><span>Hostile</span><span class="track"><span class="fill" id="repFill"></span></span><span>Allied</span></div>
+    <div id="chat" aria-live="polite"></div>
+    <form id="chatForm" autocomplete="off">
+      <input id="chatInput" maxlength="160" placeholder="Say something… try: my name is Ria / trade / pirates / tell me about this world">
+      <button type="submit">Send</button>
+    </form>
+    <div class="row"><span class="note">Demo uses an offline dialogue model that remembers you between visits. The full game swaps in the Claude API via a server proxy.</span><span class="spacer"></span><button class="ghost" id="commsClose">End call</button></div>
+  </div>
+</div>
+
+<!-- map -->
+<div id="map" class="modal" hidden>
+  <div class="sheet" id="mapSheet">
+    <div class="row"><h2>Star map</h2><span class="spacer"></span><span class="label" id="mapHint">Select a system</span></div>
+    <canvas id="mapCanvas" width="1440" height="900"></canvas>
+    <div class="row">
+      <span id="mapInfo" class="note">Click a star to plot a jump. Red rings mean pirate activity.</span>
+      <span class="spacer"></span>
+      <button class="ghost" id="mapClose">Close</button>
+      <button id="warpBtn" disabled>Engage FTL</button>
+    </div>
+  </div>
+</div>
+
+<!-- death -->
+<div id="dead" class="modal" hidden>
+  <div class="sheet">
+    <span class="label" style="color:var(--danger)">Hull breach</span>
+    <h2>Ship destroyed</h2>
+    <p>Salvage drones tow what is left of you back to the system star. Half your credits went to the repair bill.</p>
+    <div class="row"><button id="respawnBtn">Relaunch</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+
+/* ---------- persistence (per-browser) ---------- */
+const SAVE_KEY = 'nexus-demo-v1';
+let save = { credits: 120, scanned: {}, visited: {}, npc: {}, system: 0 };
+try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) save = Object.assign(save, s); } catch (e) {}
+function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+
+/* ---------- seeded randomness ---------- */
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+function makeNoise(r) {
+  const p = new Uint8Array(256), v = new Float32Array(256);
+  for (let i = 0; i < 256; i++) { p[i] = i; v[i] = r(); }
+  for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+  const h = (x, y, per) => v[p[(p[((x % per) + per) % per & 255] + y) & 255]];
+  return (x, y, per) => {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    const u = xf * xf * (3 - 2 * xf), w = yf * yf * (3 - 2 * yf);
+    const a = h(xi, yi, per), b = h(xi + 1, yi, per), c = h(xi, yi + 1, per), d = h(xi + 1, yi + 1, per);
+    return a + (b - a) * u + (c - a) * w + (a - b - c + d) * u * w;
+  };
+}
+function fbm(n, x, y, base, oct) {
+  let s = 0, amp = .5, f = 1;
+  for (let o = 0; o < oct; o++) { s += amp * n(x * f, y * f, base * f); amp *= .5; f *= 2; }
+  return s / (1 - Math.pow(.5, oct));
+}
+const SYL = ['ka','ve','thra','lo','zu','mir','ex','ob','sar','qel','ny','dra','os','yl','tor','vi','ash','en','ur','khe'];
+function genName(r, n) { let s = ''; for (let i = 0; i < n; i++) s += pick(r, SYL); return s[0].toUpperCase() + s.slice(1); }
+const ROMAN = ['I','II','III','IV','V','VI','VII'];
+
+/* ---------- galaxy ---------- */
+const FACTIONS = [
+  { name: 'Veyl Concord', vibe: 'orderly traders who keep the lanes open' },
+  { name: 'Ashen Syndicate', vibe: 'smugglers who fund the pirate drones' },
+  { name: 'Drift Choir', vibe: 'nomad mystics who read the stars like music' },
+];
+const STAR_CLASSES = [
+  { cls: 'G', color: 0xfff1c9, glow: '255,220,150' },
+  { cls: 'K', color: 0xffc27a, glow: '255,170,90' },
+  { cls: 'M', color: 0xff8a5c, glow: '255,110,70' },
+  { cls: 'A', color: 0xdfe9ff, glow: '170,200,255' },
+  { cls: 'B', color: 0xa9c4ff, glow: '120,160,255' },
+];
+const GALAXY = (() => {
+  const r = rng(1337), out = [];
+  for (let i = 0; i < 34; i++) {
+    const ang = r() * Math.PI * 2 + (i % 2) * Math.PI, arm = Math.pow(r(), .7);
+    out.push({
+      name: genName(r, 2) + '-' + (1 + Math.floor(r() * 9)),
+      x: .5 + Math.cos(ang + arm * 3.2) * arm * .44,
+      y: .5 + Math.sin(ang + arm * 3.2) * arm * .44 * .62,
+      seed: Math.floor(r() * 1e9), danger: Math.floor(r() * 4),
+      star: pick(r, STAR_CLASSES), faction: Math.floor(r() * 3),
+    });
+  }
+  out[0].danger = 1;
+  return out;
+})();
+
+/* ---------- three.js setup ---------- */
+const canvas = $('game');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x03050a);
+const camera = new THREE.PerspectiveCamera(65, 1, 0.1, 40000);
+function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+scene.add(new THREE.AmbientLight(0x8899bb, .28));
+const sun = new THREE.PointLight(0xffffff, 2.2, 0, 0);
+scene.add(sun);
+
+function glowTexture(rgb) {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(.25, `rgba(${rgb},.5)`); gr.addColorStop(1, `rgba(${rgb},0)`);
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+
+// sky: stars + nebula follow the camera
+const sky = new THREE.Group(); scene.add(sky);
+(function stars() {
+  const r = rng(42), n = 4000, pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const u = r() * 2 - 1, th = r() * Math.PI * 2, s = Math.sqrt(1 - u * u), d = 9000;
+    pos.set([s * Math.cos(th) * d, u * d, s * Math.sin(th) * d], i * 3);
+    const t = r(); col.set(t < .2 ? [1, .8, .6] : t < .4 ? [.7, .8, 1] : [1, 1, 1], i * 3);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  sky.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 1.6, sizeAttenuation: false, vertexColors: true, depthWrite: false })));
+})();
+const nebula = new THREE.Mesh(new THREE.SphereGeometry(12000, 32, 16), new THREE.MeshBasicMaterial({ side: THREE.BackSide, transparent: true, opacity: .55, depthWrite: false }));
+sky.add(nebula);
+function paintNebula(seed) {
+  const r = rng(seed), c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+  const g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, 1024, 512);
+  const hue = r() * 360;
+  for (let i = 0; i < 26; i++) {
+    const x = r() * 1024, y = 150 + r() * 212, rad = 60 + r() * 220, h = (hue + (r() - .5) * 80 + 360) % 360;
+    const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+    gr.addColorStop(0, `hsla(${h},70%,45%,.22)`); gr.addColorStop(1, `hsla(${h},70%,30%,0)`);
+    g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+  if (nebula.material.map) nebula.material.map.dispose();
+  nebula.material.map = new THREE.CanvasTexture(c); nebula.material.needsUpdate = true;
+}
+
+/* ---------- player ship ---------- */
+const ship = new THREE.Group(); scene.add(ship);
+const shipBody = new THREE.Group(); ship.add(shipBody);
+(function buildShip() {
+  const hull = new THREE.MeshStandardMaterial({ color: 0xc9d4e2, metalness: .6, roughness: .35 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x2a3446, metalness: .5, roughness: .5 });
+  const nose = new THREE.ConeGeometry(.9, 4.2, 6); nose.rotateX(-Math.PI / 2);
+  shipBody.add(new THREE.Mesh(nose, hull));
+  const wing = new THREE.Mesh(new THREE.BoxGeometry(5.6, .14, 1.5), dark); wing.position.set(0, -.1, .9); shipBody.add(wing);
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(.14, 1.1, 1.2), dark); fin.position.set(0, .55, 1.3); shipBody.add(fin);
+  for (const x of [-2.7, 2.7]) { const tip = new THREE.Mesh(new THREE.BoxGeometry(.25, .25, 1.8), hull); tip.position.set(x, -.1, .6); shipBody.add(tip); }
+  const cockpit = new THREE.Mesh(new THREE.SphereGeometry(.45, 12, 8), new THREE.MeshStandardMaterial({ color: 0x7fe7ff, emissive: 0x1a6a80, metalness: .2, roughness: .1 }));
+  cockpit.scale.set(1, .6, 1.6); cockpit.position.set(0, .35, -.3); shipBody.add(cockpit);
+})();
+const exhaust = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('127,231,255'), blending: THREE.AdditiveBlending, depthWrite: false }));
+exhaust.position.set(0, 0, 2.4); ship.add(exhaust);
+
+const player = { speed: 0, hull: 100, shield: 100, fireCd: 0, dead: false, lastHit: 0 };
+const FWD = new THREE.Vector3(0, 0, -1), UP = new THREE.Vector3(0, 1, 0);
+const tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), tmpQ = new THREE.Quaternion(), seg = new THREE.Line3();
+
+/* ---------- system content ---------- */
+let world = new THREE.Group(); scene.add(world);
+let starMesh, starGlow, planets = [], enemies = [], lasers = [], bolts = [], crates = [], bursts = [];
+let currentSys = 0;
+const BIOMES = {
+  lava:   { label: 'Volcanic',  atmo: 0xff6a2a, ramp: [[0,'#140806'],[.45,'#2e140e'],[.55,'#4a2216'],[1,'#1c0d09']], cracks: true },
+  ice:    { label: 'Glacial',   atmo: 0xbfe6ff, ramp: [[0,'#6f8fa6'],[.45,'#a9c7da'],[.62,'#e3f1f8'],[1,'#ffffff']] },
+  ocean:  { label: 'Oceanic',   atmo: 0x6fb8ff, ramp: [[0,'#07203d'],[.5,'#12497a'],[.58,'#c9b47a'],[.64,'#3f7a3a'],[1,'#2a5a2c']] },
+  jungle: { label: 'Jungle',    atmo: 0x9dffb5, ramp: [[0,'#123018'],[.4,'#1f4f24'],[.6,'#3f7f34'],[.75,'#6c9a3e'],[1,'#8a8f55']] },
+  desert: { label: 'Arid',      atmo: 0xffd49a, ramp: [[0,'#5c3419'],[.4,'#8e5a2e'],[.65,'#c28a4f'],[1,'#e8c690']] },
+  gas:    { label: 'Gas giant', atmo: 0xffe0c0, bands: true },
+};
+const BIOME_KEYS = Object.keys(BIOMES);
+function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rampColor(ramp, t) {
+  for (let i = 1; i < ramp.length; i++) if (t <= ramp[i][0]) {
+    const a = ramp[i - 1], b = ramp[i], k = (t - a[0]) / (b[0] - a[0] || 1), ca = hexToRgb(a[1]), cb = hexToRgb(b[1]);
+    return [ca[0] + (cb[0] - ca[0]) * k, ca[1] + (cb[1] - ca[1]) * k, ca[2] + (cb[2] - ca[2]) * k];
+  }
+  return hexToRgb(ramp[ramp.length - 1][1]);
+}
+function planetTexture(biome, r) {
+  const W = 256, H = 128, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'), img = g.createImageData(W, H), n = makeNoise(r), B = BIOMES[biome];
+  const hueA = [r() * 255, r() * 255, r() * 255], hueB = [200 + r() * 55, 150 + r() * 80, 100 + r() * 80];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const nx = x / W * 8, ny = y / H * 4;
+    let col, v = fbm(n, nx, ny, 8, 5);
+    if (B.bands) {
+      const t = .5 + .5 * Math.sin(y / H * 22 + v * 5);
+      col = [hueA[0] * .3 + hueB[0] * .7 * t, hueA[1] * .3 + hueB[1] * .7 * t, hueA[2] * .3 + hueB[2] * .7 * t];
+    } else {
+      const lat = Math.abs(y / H - .5) * 2;
+      if (biome !== 'ice' && lat > .86) v = Math.max(v, .8);
+      col = rampColor(B.ramp.concat(lat > .86 && biome !== 'lava' ? [] : []), v);
+      if (biome !== 'lava' && lat > .88) col = [230, 238, 245];
+      if (B.cracks) { const k = Math.abs(fbm(n, nx * 2 + 9, ny * 2, 16, 3) - .5); if (k < .035) col = [255, 110 + 120 * (1 - k / .035), 30]; }
+    }
+    const i = (y * W + x) * 4; img.data[i] = col[0]; img.data[i + 1] = col[1]; img.data[i + 2] = col[2]; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  return new THREE.CanvasTexture(c);
+}
+
+const SPECIES = ['Vhorn', 'Quellari', 'Oszithe', 'Brannock', 'Myrr', 'Tal-Esh', 'Kiyuu'];
+const TEMPERS = ['wary', 'jovial', 'cryptic', 'mercantile'];
+const FEATURES = {
+  lava: ['rivers of glass that cool into singing spires', 'a mantle that breathes every 40 hours', 'forges built into living volcanoes'],
+  ice: ['cities carved under a kilometre of ice', 'auroras that repeat the same pattern every night', 'frozen leviathans older than the Concord'],
+  ocean: ['floating reef-cities that migrate with the tides', 'a planet-wide current nobody has mapped end to end', 'bioluminescent storms'],
+  jungle: ['trees that trade nutrients by lightning', 'ruins swallowed by 90-metre ferns', 'predators that hunt in harmonised packs'],
+  desert: ['dunes that hide buried starships', 'glass flats from an orbital war', 'caravans that only travel during eclipses'],
+  gas: ['drifting harvester platforms in the upper cloud deck', 'a storm the size of three moons', 'sky-whales feeding on ammonia plankton'],
+};
+function genLore(r, p, fac) {
+  const f = pick(r, FEATURES[p.biome]);
+  const age = pick(r, ['a young world', 'an ancient world', 'a world scarred by old wars', 'a quiet backwater']);
+  const pop = p.biome === 'gas' ? 'Only orbital habitats survive here.' : `About ${(1 + Math.floor(r() * 90)) / 10} billion ${p.alien.species} live on the surface.`;
+  return `${p.name} is ${age}, known for ${f}. ${pop} The ${fac.name} holds the orbital rights. They are ${fac.vibe}.`;
+}
+
+function clearWorld() {
+  scene.remove(world);
+  world.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+  world = new THREE.Group(); scene.add(world);
+  planets = []; enemies = []; lasers = []; bolts = []; crates = []; bursts = [];
+}
+
+function loadSystem(idx) {
+  clearWorld(); currentSys = idx; save.system = idx;
+  const sys = GALAXY[idx], r = rng(sys.seed), fac = FACTIONS[sys.faction];
+  paintNebula(sys.seed);
+  const starR = 28 + r() * 16;
+  starMesh = new THREE.Mesh(new THREE.SphereGeometry(starR, 32, 16), new THREE.MeshBasicMaterial({ color: sys.star.color }));
+  world.add(starMesh);
+  starGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(sys.star.glow), blending: THREE.AdditiveBlending, depthWrite: false }));
+  starGlow.scale.setScalar(starR * 9); world.add(starGlow);
+  sun.color.setHex(sys.star.color);
+
+  const count = 3 + Math.floor(r() * 3);
+  for (let i = 0; i < count; i++) {
+    const biome = i === count - 1 && r() < .6 ? 'gas' : pick(r, BIOME_KEYS.filter(b => b !== 'gas' || i > 1));
+    const radius = biome === 'gas' ? 26 + r() * 14 : 8 + r() * 10;
+    const p = {
+      name: sys.name.split('-')[0] + ' ' + ROMAN[i], biome, radius,
+      orbit: 170 + i * 120 + r() * 50, angle: r() * Math.PI * 2, speed: (.02 + r() * .02) / (1 + i * .6),
+      id: idx + ':' + i,
+    };
+    p.alien = { id: 'npc-' + idx + '-' + i, name: genName(r, 2 + Math.floor(r() * 2)), species: pick(r, SPECIES), temper: pick(r, TEMPERS), faction: r() < .7 ? sys.faction : Math.floor(r() * 3) };
+    p.lore = genLore(r, p, FACTIONS[p.alien.faction]);
+    p.hazard = pick(r, ['Low', 'Moderate', 'High', 'Extreme']);
+    const tex = planetTexture(biome, r);
+    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: .9, metalness: 0 });
+    if (biome === 'lava') { mat.emissiveMap = tex; mat.emissive = new THREE.Color(0xffffff); mat.emissiveIntensity = .35; }
+    p.mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 24), mat);
+    p.mesh.rotation.z = (r() - .5) * .5;
+    const atmo = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.08, 32, 16), new THREE.MeshBasicMaterial({ color: BIOMES[biome].atmo, transparent: true, opacity: .13, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+    p.mesh.add(atmo);
+    if (biome === 'gas' && r() < .7) {
+      const ring = new THREE.Mesh(new THREE.RingGeometry(radius * 1.4, radius * 2.1, 64), new THREE.MeshBasicMaterial({ color: 0xd9c7a8, side: THREE.DoubleSide, transparent: true, opacity: .35, depthWrite: false }));
+      ring.rotation.x = Math.PI / 2 + .3; p.mesh.add(ring);
+    }
+    world.add(p.mesh); planets.push(p);
+  }
+  // orbit guides
+  for (const p of planets) {
+    const g = new THREE.BufferGeometry().setFromPoints(Array.from({ length: 129 }, (_, k) => new THREE.Vector3(Math.cos(k / 128 * Math.PI * 2) * p.orbit, 0, Math.sin(k / 128 * Math.PI * 2) * p.orbit)));
+    world.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0x7fe7ff, transparent: true, opacity: .07 })));
+  }
+  updatePlanets(0);
+  // pirates
+  const n = sys.danger + (sys.danger ? 1 : 0);
+  for (let i = 0; i < n; i++) { const p = pick(r, planets); spawnEnemy(tmpV.copy(p.mesh.position).add(new THREE.Vector3((r() - .5) * 120, (r() - .5) * 40, (r() - .5) * 120))); }
+  // spawn player between star and first planet
+  const p0 = planets[0];
+  ship.position.copy(p0.mesh.position).multiplyScalar(.8).add(new THREE.Vector3(0, 12, 0)).addScaledVector(tmpV2.copy(p0.mesh.position).normalize(), -40);
+  ship.lookAt(p0.mesh.position); ship.rotateY(Math.PI);
+  player.speed = 0;
+  if (!save.visited[idx]) { save.visited[idx] = 1; log('nav', `First arrival in ${sys.name}. ${planets.length} worlds charted.`); } else log('nav', `Arrived in ${sys.name}.`);
+  persist();
+  $('sysName').textContent = sys.name;
+  $('sysSub').textContent = `${sys.star.cls}-class star · ${FACTIONS[sys.faction].name} · ${['Safe', 'Patrolled', 'Contested', 'Pirate-held'][sys.danger]}`;
+  music.setSystem(sys);
+}
+
+function updatePlanets(dt) {
+  for (const p of planets) {
+    p.angle += p.speed * dt;
+    p.mesh.position.set(Math.cos(p.angle) * p.orbit, Math.sin(p.angle * 2) * 6, Math.sin(p.angle) * p.orbit);
+    p.mesh.rotation.y += dt * .05;
+  }
+}
+
+/* ---------- entities ---------- */
+const enemyGeo = new THREE.OctahedronGeometry(1.8, 0);
+function spawnEnemy(pos) {
+  const m = new THREE.Mesh(enemyGeo, new THREE.MeshStandardMaterial({ color: 0x3a1418, emissive: 0xff2d44, emissiveIntensity: .6, metalness: .6, roughness: .3, flatShading: true }));
+  m.position.copy(pos); world.add(m);
+  const e = { mesh: m, vel: new THREE.Vector3(), hp: 3, cd: 2 + Math.random() * 2, phase: Math.random() * 6.28, aggro: false };
+  enemies.push(e); return e;
+}
+const laserGeo = new THREE.CylinderGeometry(.08, .08, 3.2, 5); laserGeo.rotateX(Math.PI / 2);
+const laserMat = new THREE.MeshBasicMaterial({ color: 0x9ff3ff });
+const boltGeo = new THREE.SphereGeometry(.5, 8, 6), boltMat = new THREE.MeshBasicMaterial({ color: 0xff4d5e });
+function fire() {
+  const fwd = tmpV.copy(FWD).applyQuaternion(ship.quaternion);
+  for (const x of [-2.7, 2.7]) {
+    const m = new THREE.Mesh(laserGeo, laserMat);
+    m.position.copy(ship.position).add(new THREE.Vector3(x, -.1, -.6).applyQuaternion(ship.quaternion));
+    m.quaternion.copy(ship.quaternion); world.add(m);
+    lasers.push({ mesh: m, vel: fwd.clone().multiplyScalar(420 + player.speed), life: 1.3 });
+  }
+  sfx.laser();
+}
+function burst(pos, color, n = 40, spd = 30) {
+  const g = new THREE.BufferGeometry(), p = new Float32Array(n * 3), v = [];
+  for (let i = 0; i < n; i++) { p.set([pos.x, pos.y, pos.z], i * 3); v.push(new THREE.Vector3(Math.random() - .5, Math.random() - .5, Math.random() - .5).normalize().multiplyScalar(spd * (.4 + Math.random()))); }
+  g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  const m = new THREE.Points(g, new THREE.PointsMaterial({ color, size: .9, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  world.add(m); bursts.push({ mesh: m, v, life: 1 });
+}
+function spawnCrate(pos) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshStandardMaterial({ color: 0x3a2a10, emissive: 0xffb547, emissiveIntensity: .8 }));
+  m.position.copy(pos); world.add(m);
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('255,181,71'), blending: THREE.AdditiveBlending, depthWrite: false }));
+  halo.scale.setScalar(10); m.add(halo);
+  crates.push({ mesh: m, value: 60 + Math.floor(Math.random() * 90) });
+}
+
+/* ---------- input ---------- */
+const keys = {};
+let started = false, paused = false;
+addEventListener('keydown', e => {
+  if (document.activeElement === $('chatInput')) { if (e.code === 'Escape') closeModal('comms'); return; }
+  keys[e.code] = true;
+  if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+  if (!started) return;
+  if (e.code === 'Escape') ['scan', 'comms', 'map'].forEach(closeModal);
+  if (paused) return;
+  if (e.code === 'KeyC') doScan();
+  if (e.code === 'KeyT') openComms();
+  if (e.code === 'KeyM') openMap();
+  if (e.code === 'KeyN') music.toggle();
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+if (matchMedia('(pointer: coarse)').matches) $('touch').hidden = false;
+$('touch').querySelectorAll('button').forEach(b => {
+  const k = b.dataset.k;
+  b.addEventListener('pointerdown', e => { e.preventDefault(); keys[k] = true; });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, () => { keys[k] = false; });
+});
+
+/* ---------- HUD ---------- */
+function log(tag, msg) {
+  const d = document.createElement('div');
+  const t = document.createElement('span'); t.className = 'tag ' + (tag === 'GM' ? 'gm' : tag === 'combat' ? 'war' : ''); t.textContent = tag.toUpperCase();
+  d.append(t, msg); $('codexLog').prepend(d);
+  while ($('codexLog').children.length > 7) $('codexLog').lastChild.remove();
+}
+function setCredits(delta) { save.credits = Math.max(0, save.credits + delta); $('creditNum').textContent = save.credits + ' cr'; persist(); }
+setCredits(0);
+function nearestPlanet() {
+  let best = null, bd = Infinity;
+  for (const p of planets) { const d = ship.position.distanceTo(p.mesh.position) - p.radius; if (d < bd) { bd = d; best = p; } }
+  return { p: best, d: bd };
+}
+function inRange(p, d) { return p && d < p.radius * 3 + 45; }
+
+const radar = $('radar'), rctx = radar.getContext('2d');
+function drawRadar() {
+  const W = radar.width, R = W / 2, scale = R / 700;
+  rctx.clearRect(0, 0, W, W);
+  rctx.fillStyle = 'rgba(9,15,28,.78)'; rctx.beginPath(); rctx.arc(R, R, R - 1, 0, 7); rctx.fill();
+  rctx.strokeStyle = 'rgba(127,231,255,.25)'; rctx.lineWidth = 2; rctx.stroke();
+  rctx.beginPath(); rctx.arc(R, R, R / 2, 0, 7); rctx.lineWidth = 1; rctx.stroke();
+  const inv = tmpQ.copy(ship.quaternion).invert();
+  const dot = (pos, color, size) => {
+    const v = tmpV.copy(pos).sub(ship.position).applyQuaternion(inv);
+    let x = v.x * scale, y = v.z * scale; const L = Math.hypot(x, y);
+    if (L > R - 8) { x *= (R - 8) / L; y *= (R - 8) / L; }
+    rctx.fillStyle = color; rctx.beginPath(); rctx.arc(R + x, R + y, size, 0, 7); rctx.fill();
+  };
+  dot(starMesh.position, '#ffd28a', 9);
+  for (const p of planets) dot(p.mesh.position, save.scanned[p.id] ? '#7fe7ff' : '#9aa9bb', 6);
+  for (const c of crates) dot(c.mesh.position, '#ffb547', 4);
+  for (const e of enemies) dot(e.mesh.position, '#ff4d5e', 4);
+  rctx.fillStyle = '#fff'; rctx.beginPath(); rctx.moveTo(R, R - 9); rctx.lineTo(R - 6, R + 6); rctx.lineTo(R + 6, R + 6); rctx.fill();
+}
+
+/* ---------- modals ---------- */
+function openModal(id) { $(id).hidden = false; paused = true; for (const k in keys) keys[k] = false; }
+function closeModal(id) { if ($(id).hidden) return; $(id).hidden = true; paused = !['scan', 'comms', 'map', 'dead', 'start'].every(m => $(m).hidden); }
+$('scanClose').onclick = () => closeModal('scan');
+$('commsClose').onclick = () => closeModal('comms');
+$('mapClose').onclick = () => closeModal('map');
+
+function doScan() {
+  const { p, d } = nearestPlanet();
+  if (!inRange(p, d)) { log('scan', 'No planet in scanner range. Fly closer.'); return; }
+  const first = !save.scanned[p.id];
+  $('scanTitle').textContent = p.name;
+  const chips = $('scanChips'); chips.innerHTML = '';
+  const add = (t, c) => { const s = document.createElement('span'); s.className = 'chip ' + (c || ''); s.textContent = t; chips.append(s); };
+  add(BIOMES[p.biome].label); add(`Radius ${(p.radius * 420).toFixed(0)} km`); add(`Hazard: ${p.hazard}`, p.hazard === 'High' || p.hazard === 'Extreme' ? 'red' : 'amber');
+  add(FACTIONS[p.alien.faction].name);
+  $('scanLore').textContent = p.lore;
+  $('scanNote').textContent = first ? 'New discovery: +50 cr. Entry added to the Codex.' : 'Already in your Codex.';
+  if (first) { save.scanned[p.id] = 1; setCredits(50); log('codex', `Scanned ${p.name}: ${BIOMES[p.biome].label.toLowerCase()} world.`); sfx.chime(); }
+  openModal('scan');
+}
+
+/* ---------- alien dialogue (offline mock of the LLM agent) ---------- */
+let talking = null;
+function mem(a) { return save.npc[a.id] || (save.npc[a.id] = { visits: 0, name: null, rep: 0, topics: [], traded: false }); }
+function say(who, text, mine) {
+  const d = document.createElement('div'); d.className = 'msg ' + (mine ? 'me' : 'them');
+  const w = document.createElement('span'); w.className = 'who'; w.textContent = who;
+  d.append(w, text); $('chat').append(d); $('chat').scrollTop = 1e6;
+}
+function updateRep(m) {
+  const f = $('repFill'), v = Math.max(-100, Math.min(100, m.rep));
+  f.style.left = v >= 0 ? '50%' : (50 + v / 2) + '%'; f.style.width = Math.abs(v) / 2 + '%';
+  f.style.background = v >= 0 ? 'var(--ok)' : 'var(--danger)';
+}
+const VOICE = {
+  wary: { hi: 'State your business, and keep your weapons cold.', idle: 'I have said enough. Ask what you came to ask.' },
+  jovial: { hi: 'Ha! A visitor! Nobody lands here unless they are lost or interesting.', idle: 'You talk like a customs form. Ask me something fun.' },
+  cryptic: { hi: 'The stars mentioned you would come. They did not say why.', idle: 'Some answers only arrive when you stop asking.' },
+  mercantile: { hi: 'Welcome, welcome. Everything has a price, including this greeting. That one is free.', idle: 'If it is not a deal, it is just noise, friend.' },
+};
+function openComms() {
+  const { p, d } = nearestPlanet();
+  if (!inRange(p, d)) { log('comms', 'Nobody in comms range. Fly closer to a planet.'); return; }
+  talking = p; const a = p.alien, m = mem(a);
+  $('commsTitle').textContent = `${a.name} of ${p.name}`;
+  $('commsFaction').textContent = `${a.species} · ${FACTIONS[a.faction].name}`;
+  $('chat').innerHTML = '';
+  let hi;
+  if (m.visits === 0) hi = VOICE[a.temper].hi;
+  else {
+    hi = `You again, ${m.name || 'pilot'}. That is visit number ${m.visits + 1}.`;
+    if (m.topics.length) hi += ` Last time you wanted to talk about ${m.topics[m.topics.length - 1]}.`;
+    if (m.rep < -20) hi += ' I have not forgotten your insults.';
+    else if (m.rep > 30) hi += ' It is good to see a friend.';
+  }
+  m.visits++; persist(); updateRep(m);
+  say(a.name, hi);
+  openModal('comms');
+  setTimeout(() => $('chatInput').focus(), 50);
+}
+function npcReply(p, text) {
+  const a = p.alien, m = mem(a), t = text.toLowerCase(), fac = FACTIONS[a.faction];
+  const addr = m.name || 'pilot';
+  let out, topic = null;
+  const nm = t.match(/(?:my name is|i am|i'm|call me)\s+([a-z][a-z'\-]{1,15})/);
+  if (nm) { m.name = nm[1][0].toUpperCase() + nm[1].slice(1); out = `${m.name}. I will remember that. My people do not forget names.`; m.rep += 3; }
+  else if (/\b(idiot|stupid|hate|shut up|ugly|kill you|worthless)\b/.test(t)) { m.rep -= 15; out = a.temper === 'jovial' ? 'Ouch. I will be telling everyone at the reef about you.' : 'Noted. The Codex of my people now has a page about you, and it is not flattering.'; topic = 'your insults'; }
+  else if (/\b(hello|hi|hey|greetings|yo)\b/.test(t)) { out = `Greetings, ${addr}. ${VOICE[a.temper].hi}`; m.rep += 1; }
+  else if (/\b(trade|buy|sell|credit|deal|money|job|work)\b/.test(t)) {
+    topic = 'trade';
+    if (m.traded) out = `We already did business, ${addr}. Come back when the markets move.`;
+    else if (save.scanned[p.id]) { m.traded = true; m.rep += 5; setCredits(40); log('trade', `Sold scan data to ${a.name}: +40 cr.`); out = `Your scan of ${p.name} is useful to us. 40 credits, sent. Pleasure doing business, ${addr}.`; }
+    else out = `Scan my world first (press C). Fresh survey data is worth 40 credits to me.`;
+  }
+  else if (/\b(pirate|pirates|syndicate|drone|drones|danger|attack|raid)\b/.test(t)) {
+    topic = 'pirates';
+    const n = enemies.length;
+    out = a.faction === 1 ? `Pirates? I would not know anything about that. *static* ... Anyway, stay out of the eastern lane.`
+      : n ? `${n} Syndicate drone${n > 1 ? 's are' : ' is'} in this system right now. Destroy them and the lanes get safer for everyone.`
+      : `The lanes are quiet today. It will not last, because the Syndicate always comes back.`;
+  }
+  else if (/\b(planet|world|home|lore|history|here|place|tell me)\b/.test(t)) { topic = `${p.name}'s history`; out = p.lore; }
+  else if (/\b(faction|concord|choir|who rules|politics|war)\b/.test(t)) { topic = 'politics'; out = `I stand with the ${fac.name}. We are ${fac.vibe}. The other two? ${FACTIONS.filter(f => f !== fac).map(f => f.name).join(' and ')}. Make your own mind up.`; }
+  else if (/\b(remember|last time|before|know me)\b/.test(t)) {
+    topic = 'memories';
+    out = m.visits > 1 || m.topics.length ? `Of course. You have visited ${m.visits} time${m.visits > 1 ? 's' : ''}${m.name ? `, ${m.name}` : ''}. We talked about ${m.topics.slice(-3).join(', ') || 'very little'}.` : 'We have only just met. Give me something worth remembering.';
+  }
+  else if (/\b(who are you|your name|what are you)\b/.test(t)) { topic = 'me'; out = `I am ${a.name}, a ${a.species} of ${p.name}. My temperament? My friends say ${a.temper}.`; }
+  else if (/\b(thanks|thank you|friend|help)\b/.test(t)) { m.rep += 4; out = `You are welcome, ${addr}. Fly safely.`; }
+  else out = VOICE[a.temper].idle;
+  if (topic) { m.topics.push(topic); if (m.topics.length > 8) m.topics.shift(); }
+  m.rep = Math.max(-100, Math.min(100, m.rep)); persist(); updateRep(m);
+  return out;
+}
+$('chatForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = $('chatInput').value.trim(); if (!v || !talking) return;
+  $('chatInput').value = ''; say('You', v, true);
+  const p = talking, reply = npcReply(p, v);
+  const typing = document.createElement('div'); typing.className = 'msg them'; typing.textContent = 'transmitting…'; $('chat').append(typing); $('chat').scrollTop = 1e6;
+  setTimeout(() => { typing.remove(); if (talking === p) say(p.alien.name, reply); }, 450 + Math.min(900, reply.length * 6));
+});
+
+/* ---------- star map / FTL ---------- */
+const mapC = $('mapCanvas'), mctx = mapC.getContext('2d');
+let mapSel = null, warping = 0;
+function drawMap() {
+  const W = mapC.width, H = mapC.height;
+  mctx.fillStyle = '#03060d'; mctx.fillRect(0, 0, W, H);
+  const cur = GALAXY[currentSys];
+  // lanes to near neighbours
+  mctx.strokeStyle = 'rgba(127,231,255,.1)'; mctx.lineWidth = 2;
+  GALAXY.forEach((s, i) => {
+    GALAXY.map((o, j) => [j, Math.hypot(o.x - s.x, o.y - s.y)]).filter(([j]) => j !== i).sort((a, b) => a[1] - b[1]).slice(0, 2)
+      .forEach(([j]) => { mctx.beginPath(); mctx.moveTo(s.x * W, s.y * H); mctx.lineTo(GALAXY[j].x * W, GALAXY[j].y * H); mctx.stroke(); });
+  });
+  GALAXY.forEach((s, i) => {
+    const x = s.x * W, y = s.y * H, c = '#' + s.star.color.toString(16).padStart(6, '0');
+    if (s.danger >= 2) { mctx.strokeStyle = 'rgba(255,77,94,.55)'; mctx.lineWidth = 2; mctx.beginPath(); mctx.arc(x, y, 17, 0, 7); mctx.stroke(); }
+    mctx.fillStyle = c; mctx.beginPath(); mctx.arc(x, y, save.visited[i] ? 8 : 6, 0, 7); mctx.fill();
+    if (i === currentSys || i === mapSel) {
+      mctx.strokeStyle = i === currentSys ? '#7fe7ff' : '#ffb547'; mctx.lineWidth = 3; mctx.beginPath(); mctx.arc(x, y, 24, 0, 7); mctx.stroke();
+    }
+    mctx.font = (i === currentSys || i === mapSel ? '600 26px ' : '22px ') + '"IBM Plex Mono", monospace';
+    mctx.fillStyle = i === currentSys ? '#7fe7ff' : i === mapSel ? '#ffb547' : 'rgba(214,228,240,.55)';
+    mctx.fillText(s.name, x + 14, y - 12);
+  });
+  if (mapSel != null) {
+    const s = GALAXY[mapSel];
+    mctx.setLineDash([10, 10]); mctx.strokeStyle = '#ffb547'; mctx.lineWidth = 2;
+    mctx.beginPath(); mctx.moveTo(cur.x * W, cur.y * H); mctx.lineTo(s.x * W, s.y * H); mctx.stroke(); mctx.setLineDash([]);
+  }
+}
+function openMap() { mapSel = null; $('warpBtn').disabled = true; $('mapInfo').textContent = 'Click a star to plot a jump. Red rings mean pirate activity.'; $('mapHint').textContent = `You are in ${GALAXY[currentSys].name}`; drawMap(); openModal('map'); }
+mapC.addEventListener('click', e => {
+  const b = mapC.getBoundingClientRect(), x = (e.clientX - b.left) / b.width, y = (e.clientY - b.top) / b.height;
+  let best = null, bd = .05;
+  GALAXY.forEach((s, i) => { const d = Math.hypot(s.x - x, (s.y - y) * .62); if (d < bd) { bd = d; best = i; } });
+  if (best == null || best === currentSys) return;
+  mapSel = best; const s = GALAXY[best];
+  const ly = (Math.hypot(s.x - GALAXY[currentSys].x, s.y - GALAXY[currentSys].y) * 100).toFixed(1);
+  $('mapInfo').textContent = `${s.name} · ${s.star.cls}-class · ${FACTIONS[s.faction].name} · ${['safe', 'patrolled', 'contested', 'pirate-held'][s.danger]} · ${ly} ly${save.visited[best] ? ' · visited' : ''}`;
+  $('warpBtn').disabled = false; drawMap();
+});
+$('warpBtn').onclick = () => {
+  if (mapSel == null) return;
+  const target = mapSel; closeModal('map'); warping = 1.4; paused = true;
+  log('nav', `FTL drive charging. Jumping to ${GALAXY[target].name}.`); sfx.warp();
+  setTimeout(() => $('flash').classList.add('on'), 900);
+  setTimeout(() => { loadSystem(target); $('flash').classList.remove('on'); paused = false; gm.timer = 25; }, 1400);
+};
+
+/* ---------- AI Game Master (demo heuristic director) ---------- */
+const gm = {
+  timer: 30, tension: 0,
+  tick(dt) {
+    this.timer -= dt; this.tension = Math.max(0, this.tension - dt * .01);
+    if (this.timer > 0) return;
+    this.timer = 30 + Math.random() * 25;
+    // simple tension curve: if the player is hurt or busy fighting, give them a breather
+    const hurt = player.hull < 45, busy = enemies.length >= 3;
+    const pool = hurt || busy ? ['derelict', 'rumor', 'derelict'] : ['raid', 'derelict', 'flare', 'rumor', 'raid'];
+    const ev = pool[Math.floor(Math.random() * pool.length)];
+    const fwd = tmpV2.copy(FWD).applyQuaternion(ship.quaternion);
+    if (ev === 'raid') {
+      const n = 1 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < n; i++) spawnEnemy(ship.position.clone().addScaledVector(fwd, 180 + i * 20).add(new THREE.Vector3((Math.random() - .5) * 90, (Math.random() - .5) * 40, (Math.random() - .5) * 90)));
+      log('GM', `Ashen Syndicate raid. ${n} drone${n > 1 ? 's' : ''} dropped out of warp ahead.`);
+    } else if (ev === 'derelict') {
+      spawnCrate(ship.position.clone().addScaledVector(fwd, 120).add(new THREE.Vector3((Math.random() - .5) * 50, (Math.random() - .5) * 20, 0)));
+      log('GM', 'Distress beacon ahead: a derelict cargo pod. Fly into it to salvage.');
+    } else if (ev === 'flare') {
+      player.shield = Math.max(0, player.shield - 40);
+      log('GM', `Stellar flare from ${GALAXY[currentSys].name}. Shields drained.`);
+    } else {
+      const s = GALAXY[Math.floor(Math.random() * GALAXY.length)];
+      log('GM', `Rumour on the comm lanes: the ${FACTIONS[s.faction].name} is massing ships near ${s.name}.`);
+    }
+  },
+};
+
+/* ---------- audio: adaptive drone per system ---------- */
+const music = (() => {
+  let ctx, master, on = true, voices = [], filter, pluckT = 0, root = 110, scale = [0, 3, 5, 7, 10];
+  function init() {
+    if (ctx) return;
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    master = ctx.createGain(); master.gain.value = .5; master.connect(ctx.destination);
+    filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 600; filter.connect(master);
+    for (let i = 0; i < 3; i++) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = i === 2 ? 'triangle' : 'sawtooth'; g.gain.value = .035; o.connect(g); g.connect(filter); o.start(); voices.push(o);
+    }
+    retune();
+  }
+  function retune() {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    voices[0].frequency.setTargetAtTime(root / 2, t, 1.5);
+    voices[1].frequency.setTargetAtTime(root / 2 * 1.005, t, 1.5);
+    voices[2].frequency.setTargetAtTime(root * Math.pow(2, scale[2] / 12), t, 1.5);
+  }
+  function tick(dt, intensity) {
+    if (!ctx || !on) return;
+    filter.frequency.setTargetAtTime(450 + intensity * 1400 + Math.sin(performance.now() / 4000) * 200, ctx.currentTime, .5);
+    pluckT -= dt;
+    if (pluckT <= 0) {
+      pluckT = intensity > .5 ? .35 : 1.2 + Math.random() * 1.5;
+      const o = ctx.createOscillator(), g = ctx.createGain(), n = scale[Math.floor(Math.random() * scale.length)] + 12 * Math.floor(Math.random() * 2);
+      o.type = 'sine'; o.frequency.value = root * 2 * Math.pow(2, n / 12);
+      g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(.06, ctx.currentTime + .01); g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + 1.6);
+      o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime + 1.7);
+    }
+  }
+  return {
+    init, tick, get ctx() { return ctx; }, get out() { return master; },
+    setSystem(sys) {
+      const r = rng(sys.seed + 7);
+      root = 82 * Math.pow(2, Math.floor(r() * 7) / 12);
+      scale = [[0, 3, 5, 7, 10], [0, 2, 4, 7, 9], [0, 2, 3, 7, 8], [0, 1, 5, 7, 10]][sys.danger];
+      retune();
+    },
+    toggle() { if (!ctx) return; on = !on; master.gain.setTargetAtTime(on ? .5 : 0, ctx.currentTime, .2); log('audio', on ? 'Music on.' : 'Music muted.'); },
+  };
+})();
+const sfx = {
+  tone(type, f0, f1, dur, vol) {
+    const ctx = music.ctx; if (!ctx) return;
+    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g); g.connect(music.out); o.start(); o.stop(t + dur);
+  },
+  laser() { this.tone('square', 1400, 220, .12, .05); },
+  hit() { this.tone('sawtooth', 200, 40, .3, .12); },
+  boom() { this.tone('sawtooth', 120, 20, .7, .2); this.tone('square', 60, 20, .5, .1); },
+  chime() { this.tone('sine', 660, 1320, .4, .08); },
+  warp() { this.tone('sawtooth', 60, 900, 1.4, .08); },
+};
+
+/* ---------- main loop ---------- */
+let last = performance.now();
+function damage(n) {
+  if (player.dead) return;
+  const s = Math.min(player.shield, n); player.shield -= s; player.hull -= n - s; player.lastHit = 0;
+  $('dmg').style.opacity = n - s > 0 ? 1 : .45; setTimeout(() => { $('dmg').style.opacity = 0; }, 160);
+  sfx.hit(); gm.tension += .1;
+  if (player.hull <= 0) {
+    player.hull = 0; player.dead = true; burst(ship.position, 0x9ff3ff, 80, 40); ship.visible = false; sfx.boom();
+    setTimeout(() => openModal('dead'), 900);
+  }
+}
+$('respawnBtn').onclick = () => {
+  closeModal('dead'); setCredits(-Math.floor(save.credits / 2));
+  player.hull = 100; player.shield = 100; player.dead = false; ship.visible = true;
+  for (const e of enemies) world.remove(e.mesh); enemies = [];
+  loadSystem(currentSys); log('nav', 'Ship rebuilt. Try not to do that again.');
+};
+
+function step(dt) {
+  const active = started && !paused && !player.dead;
+  updatePlanets(dt);
+
+  if (active) {
+    const yaw = (keys.KeyA ? 1 : 0) - (keys.KeyD ? 1 : 0);
+    const pitch = (keys.KeyW ? -1 : 0) + (keys.KeyS ? 1 : 0);
+    ship.rotateY(yaw * 1.5 * dt); ship.rotateX(pitch * 1.2 * dt);
+    shipBody.rotation.z += ((yaw * .5) - shipBody.rotation.z) * Math.min(1, dt * 5);
+    if (keys.ArrowUp || keys.KeyE) player.speed += 35 * dt;
+    if (keys.ArrowDown || keys.KeyQ) player.speed -= 45 * dt;
+    player.speed = Math.max(-10, Math.min(70, player.speed));
+    player.fireCd -= dt;
+    if (keys.Space && player.fireCd <= 0) { fire(); player.fireCd = .18; }
+    player.lastHit += dt;
+    if (player.lastHit > 3) player.shield = Math.min(100, player.shield + 12 * dt);
+  }
+  const boost = active && (keys.ShiftLeft || keys.ShiftRight) && player.speed > 5;
+  const v = player.speed * (boost ? 2.6 : 1);
+  if (!player.dead) ship.position.addScaledVector(tmpV.copy(FWD).applyQuaternion(ship.quaternion), v * dt);
+  exhaust.scale.setScalar(1 + Math.max(0, v) / 18);
+  exhaust.material.opacity = .3 + Math.min(1, Math.max(0, v) / 60) * .7;
+
+  // collisions with bodies
+  for (const b of [{ pos: starMesh.position, r: starMesh.geometry.parameters.radius + 6, dmg: 40 }, ...planets.map(p => ({ pos: p.mesh.position, r: p.radius + 2.5, dmg: 12 }))]) {
+    const d = ship.position.distanceTo(b.pos);
+    if (d < b.r && !player.dead) { ship.position.copy(b.pos).addScaledVector(tmpV.copy(ship.position).sub(b.pos).normalize(), b.r + .5); player.speed *= -.3; damage(b.dmg); }
+  }
+
+  // lasers
+  for (let i = lasers.length - 1; i >= 0; i--) {
+    const L = lasers[i]; seg.start.copy(L.mesh.position); L.mesh.position.addScaledVector(L.vel, dt); seg.end.copy(L.mesh.position); L.life -= dt;
+    let hit = false;
+    for (const e of enemies) if (seg.closestPointToPoint(e.mesh.position, true, tmpV).distanceTo(e.mesh.position) < 3.2) {
+      e.hp--; e.aggro = true; hit = true; burst(L.mesh.position, 0x9ff3ff, 10, 12);
+      if (e.hp <= 0) e.dead = true;
+      break;
+    }
+    if (hit || L.life <= 0) { world.remove(L.mesh); lasers.splice(i, 1); }
+  }
+  // enemies
+  const fwd = tmpV2.copy(FWD).applyQuaternion(ship.quaternion);
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+    if (e.dead) {
+      burst(e.mesh.position, 0xff6a3a, 60, 35); sfx.boom(); world.remove(e.mesh); enemies.splice(i, 1);
+      const bounty = 35 + GALAXY[currentSys].danger * 10; setCredits(bounty); log('combat', `Syndicate drone destroyed. Bounty +${bounty} cr.`);
+      if (Math.random() < .3) spawnCrate(e.mesh.position);
+      continue;
+    }
+    const d = e.mesh.position.distanceTo(ship.position);
+    if (d < 380 && !player.dead) e.aggro = true;
+    e.phase += dt * .7;
+    let target;
+    if (e.aggro && !player.dead) {
+      target = ship.position.clone().add(new THREE.Vector3(Math.cos(e.phase) * 45, Math.sin(e.phase * 1.3) * 18, Math.sin(e.phase) * 45));
+    } else target = e.mesh.position.clone().add(new THREE.Vector3(Math.cos(e.phase) * 20, 0, Math.sin(e.phase) * 20));
+    const desired = target.sub(e.mesh.position); const dl = desired.length();
+    if (dl > .01) desired.multiplyScalar(Math.min(55, dl) / dl);
+    e.vel.lerp(desired, Math.min(1, dt * 1.4));
+    e.mesh.position.addScaledVector(e.vel, dt);
+    e.mesh.rotation.x += dt * 2; e.mesh.rotation.y += dt * 1.3;
+    e.cd -= dt;
+    if (e.aggro && active && d < 220 && e.cd <= 0) {
+      e.cd = 1.6 + Math.random() * 1.6;
+      const lead = ship.position.clone().addScaledVector(fwd, v * (d / 150));
+      const m = new THREE.Mesh(boltGeo, boltMat); m.position.copy(e.mesh.position); world.add(m);
+      bolts.push({ mesh: m, vel: lead.sub(e.mesh.position).normalize().multiplyScalar(150), life: 3 });
+    }
+  }
+  for (let i = bolts.length - 1; i >= 0; i--) {
+    const b = bolts[i]; b.mesh.position.addScaledVector(b.vel, dt); b.life -= dt;
+    const hit = !player.dead && b.mesh.position.distanceTo(ship.position) < 2.8;
+    if (hit) damage(9);
+    if (hit || b.life <= 0) { world.remove(b.mesh); bolts.splice(i, 1); }
+  }
+  for (let i = crates.length - 1; i >= 0; i--) {
+    const c = crates[i]; c.mesh.rotation.x += dt; c.mesh.rotation.y += dt * .7;
+    if (!player.dead && c.mesh.position.distanceTo(ship.position) < 6) { setCredits(c.value); log('salvage', `Recovered cargo pod: +${c.value} cr.`); sfx.chime(); world.remove(c.mesh); crates.splice(i, 1); }
+  }
+  for (let i = bursts.length - 1; i >= 0; i--) {
+    const b = bursts[i], arr = b.mesh.geometry.attributes.position.array; b.life -= dt;
+    b.v.forEach((vv, k) => { arr[k * 3] += vv.x * dt; arr[k * 3 + 1] += vv.y * dt; arr[k * 3 + 2] += vv.z * dt; });
+    b.mesh.geometry.attributes.position.needsUpdate = true; b.mesh.material.opacity = Math.max(0, b.life);
+    if (b.life <= 0) { world.remove(b.mesh); b.mesh.geometry.dispose(); b.mesh.material.dispose(); bursts.splice(i, 1); }
+  }
+  if (active) gm.tick(dt);
+
+  // camera
+  const up = tmpV.copy(UP).applyQuaternion(ship.quaternion);
+  const want = ship.position.clone().add(new THREE.Vector3(0, 3.2, 12 + Math.max(0, v) * .04).applyQuaternion(ship.quaternion));
+  const k = started ? 1 - Math.exp(-dt * 7) : 1;
+  if (!started) { const t = performance.now() / 6000; want.copy(ship.position).add(new THREE.Vector3(Math.cos(t) * 16, 5, Math.sin(t) * 16)); }
+  camera.position.lerp(want, k);
+  camera.up.lerp(up, k);
+  camera.lookAt(started ? ship.position.clone().addScaledVector(fwd, 30) : ship.position);
+  const fovWant = warping > 0 ? 125 : 65 + (boost ? 12 : 0);
+  camera.fov += (fovWant - camera.fov) * Math.min(1, dt * 4); camera.updateProjectionMatrix();
+  if (warping > 0) warping -= dt;
+  sky.position.copy(camera.position);
+  starGlow.material.rotation += dt * .02;
+
+  // HUD
+  $('speedNum').textContent = Math.round(Math.abs(v) * 10);
+  $('boostTag').textContent = boost ? 'BOOST' : v < 0 ? 'REVERSE' : '';
+  $('hullFill').style.width = player.hull + '%'; $('hullNum').textContent = Math.ceil(player.hull);
+  $('hullBar').classList.toggle('low', player.hull < 35);
+  $('shieldFill').style.width = player.shield + '%'; $('shieldNum').textContent = Math.floor(player.shield);
+  const np = nearestPlanet(), pr = $('prompt');
+  if (active && inRange(np.p, np.d)) {
+    pr.hidden = false;
+    const html = `<span class="pname">${np.p.name}</span><b>C</b> scan${save.scanned[np.p.id] ? ' (done)' : ''} · <b>T</b> hail ${np.p.alien.name}`;
+    if (pr.dataset.h !== html) { pr.innerHTML = html; pr.dataset.h = html; }
+  } else pr.hidden = true;
+  drawRadar();
+  music.tick(dt, Math.min(1, enemies.filter(e => e.aggro).length / 3));
+}
+
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  step(dt);
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+$('launchBtn').onclick = () => {
+  music.init(); music.setSystem(GALAXY[currentSys]);
+  $('start').hidden = true; started = true; paused = false;
+  log('GM', 'The Game Master is watching. Scan a planet or hail its people to begin.');
+};
+
+loadSystem(save.system in GALAXY ? save.system : 0);
+paused = true;
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

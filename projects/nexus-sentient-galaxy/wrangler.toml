@@ -1,0 +1,23 @@
+# NEXUS web demo — static assets served by a Cloudflare Worker.
+# Deploy (Node 22+, `wrangler login`):
+#   npx wrangler deploy            # production → playpath.sjapathway.com
+#   npx wrangler deploy --env dev  # dev worker on workers.dev
+
+name = "sja-playpath"
+compatibility_date = "2024-09-23"
+workers_dev = true
+
+routes = [
+  { pattern = "playpath.sjapathway.com", custom_domain = true }
+]
+
+[assets]
+directory = "./demo"
+
+[env.dev]
+name = "sja-playpath-dev"
+workers_dev = true
+routes = []
+
+[env.dev.assets]
+directory = "./demo"
