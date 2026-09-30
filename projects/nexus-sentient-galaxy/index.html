@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>NEXUS Sentient Galaxy</title>
+  <meta name="description" content="An AI-driven open-world space RPG in your browser. Fly, fight, land on living worlds and talk to aliens who remember you.">
+  <meta name="theme-color" content="#04060c">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+</head>
+<body>
+  <canvas id="game" tabindex="0" aria-label="NEXUS game view"></canvas>
+
+  <!-- HUD -->
+  <div id="loc" class="hud">
+    <span class="label">Current system</span>
+    <span class="sys" id="sysName">—</span>
+    <span class="sub" id="sysSub">—</span>
+    <span class="mode" id="modeTag"></span>
+    <span id="net"><i></i><span id="netText">Offline</span></span>
+  </div>
+
+  <div id="vitals" class="hud panel">
+    <div class="bar hull" id="hullBar"><span class="label">Hull</span><span class="track"><span class="fill" id="hullFill"></span></span><span class="num" id="hullNum">100</span></div>
+    <div class="bar" id="shieldBar"><span class="label">Shield</span><span class="track"><span class="fill" id="shieldFill"></span></span><span class="num" id="shieldNum">100</span></div>
+    <div class="bar heat" id="heatBar"><span class="label">Heat</span><span class="track"><span class="fill" id="heatFill"></span></span><span class="num" id="heatNum">0</span></div>
+    <div class="vrow"><span class="label">Missiles</span><b id="missileNum">6</b></div>
+    <div class="vrow"><span class="label">Credits</span><b id="creditNum">0 cr</b></div>
+    <div class="reps" id="reps"></div>
+  </div>
+
+  <div id="contracts" class="hud"></div>
+
+  <div id="target" class="hud panel" hidden>
+    <span class="label" id="tgtLabel">Target</span>
+    <span class="n" id="tgtName"></span>
+    <div class="bar hull"><span class="label">Hull</span><span class="track"><span class="fill" id="tgtHull"></span></span><span class="num" id="tgtDist"></span></div>
+    <div class="bar"><span class="label">Shld</span><span class="track"><span class="fill" id="tgtShield"></span></span><span class="num"></span></div>
+  </div>
+
+  <div id="brackets" class="hud"></div>
+  <div id="arrow" class="hud" hidden></div>
+  <div id="lead" class="hud" hidden></div>
+  <div id="cross" class="hud"></div>
+  <div id="stick" class="hud" hidden></div>
+  <div id="prompt" class="hud panel" hidden></div>
+  <div id="progress" class="hud" hidden><i id="progressFill"></i></div>
+  <div id="toasts" class="hud"></div>
+
+  <div id="speedo" class="hud">
+    <span class="v" id="speedNum">0</span>
+    <span class="meta">
+      <span class="label">m/s · throttle</span>
+      <span id="throttle"><i id="throttleFill"></i></span>
+      <span><span class="fa" id="faTag">Flight assist</span> <span class="boost" id="boostTag"></span></span>
+    </span>
+  </div>
+
+  <canvas id="radar" class="hud" width="300" height="300"></canvas>
+
+  <div id="codex" class="hud panel">
+    <span class="label">Codex · live chronicle</span>
+    <div id="codexLog"></div>
+  </div>
+
+  <form id="chatline" hidden autocomplete="off">
+    <input type="text" id="chatlineInput" maxlength="140" placeholder="Message pilots in this system…">
+    <button type="submit">Send</button>
+  </form>
+
+  <div id="touch" hidden>
+    <div id="joy"><i id="joyKnob"></i></div>
+    <div class="acts">
+      <button data-k="KeyW">Thrust</button>
+      <button data-k="KeyS">Brake</button>
+      <button data-k="ShiftLeft">Boost</button>
+      <button data-k="Space" class="hot">Fire</button>
+      <button data-k="KeyF" class="hot">Missile</button>
+      <button data-k="Tab">Target</button>
+      <button data-k="KeyE">Action</button>
+      <button data-k="KeyL">Land</button>
+      <button data-k="KeyM">Map</button>
+    </div>
+  </div>
+
+  <div id="fade"></div>
+  <div id="warp"></div>
+  <div id="dmg"></div>
+
+  <!-- start -->
+  <div id="start" class="modal">
+    <div class="sheet">
+      <span class="label" style="color:var(--hud)">PlayPath · SJA Pathway · build 0.2</span>
+      <h1>NEXUS<span>The Sentient Galaxy</span></h1>
+      <p>You are a lone pilot in a procedurally generated galaxy of 48 star systems. Fly Newtonian dogfights against Syndicate pirates, trade at orbital stations, land on living worlds whose wildlife evolves between visits, and talk to aliens who remember what you said to them. The Game Master watches how you play and paces the galaxy around you.</p>
+      <div class="pillars">
+        <div><b>Explore</b>48 systems, shader-rendered worlds, asteroid belts, FTL lanes</div>
+        <div><b>Fight</b>Lasers with heat, homing missiles, squad AI, convoys</div>
+        <div><b>Talk</b>Aliens with moods, memory, gossip and reputation</div>
+        <div><b>Land</b>Terrain, herds and predators that evolve per visit</div>
+        <div><b>Together</b>See other pilots live in the same star system</div>
+      </div>
+      <div class="pilot">
+        <label class="label" for="pilotName">Pilot name</label>
+        <input type="text" id="pilotName" maxlength="18" placeholder="Callsign">
+        <div class="swatches" id="swatches" aria-label="Ship colour"></div>
+      </div>
+      <div class="keys">
+        <span><kbd>Mouse</kbd> steer (click to capture)</span>
+        <span><kbd>↑↓←→</kbd> pitch / yaw (keyboard)</span>
+        <span><kbd>W</kbd><kbd>S</kbd> throttle / thrust</span>
+        <span><kbd>A</kbd><kbd>D</kbd> strafe · <kbd>Q</kbd><kbd>E</kbd> roll</span>
+        <span><kbd>Shift</kbd> boost · <kbd>Z</kbd> flight assist</span>
+        <span><kbd>Space</kbd>/<kbd>LMB</kbd> lasers</span>
+        <span><kbd>F</kbd>/<kbd>RMB</kbd> missile · <kbd>Tab</kbd> target</span>
+        <span><kbd>C</kbd> scan · <kbd>T</kbd> hail · <kbd>E</kbd> dock / tame</span>
+        <span><kbd>L</kbd> land / take off · <kbd>M</kbd> star map</span>
+        <span><kbd>K</kbd> codex · <kbd>Enter</kbd> chat · <kbd>N</kbd> mute</span>
+      </div>
+      <div class="row">
+        <button id="launchBtn">Launch</button>
+        <button class="ghost" id="resetBtn">New pilot</button>
+        <span class="spacer"></span>
+        <span class="note" id="saveNote"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- scan -->
+  <div id="scan" class="modal" hidden>
+    <div class="sheet">
+      <span class="label">Planetary scan complete</span>
+      <h2 id="scanTitle"></h2>
+      <div class="row" id="scanChips"></div>
+      <p id="scanLore"></p>
+      <div class="row"><span class="note" id="scanNote"></span><span class="spacer"></span><button id="scanClose">Close</button></div>
+    </div>
+  </div>
+
+  <!-- comms -->
+  <div id="comms" class="modal" hidden>
+    <div class="sheet">
+      <div class="row"><span class="label">Open channel</span><span class="spacer"></span><span class="link" id="linkTag"></span></div>
+      <h2 id="commsTitle"></h2>
+      <div class="row" id="commsChips"></div>
+      <div class="rep"><span>Hostile</span><span class="track"><span class="fill" id="repFill"></span></span><span>Allied</span></div>
+      <div id="chat" aria-live="polite"></div>
+      <form id="chatForm" autocomplete="off">
+        <input type="text" id="chatInput" maxlength="300" placeholder="Say anything. Try your name, a trade, pirates, their world…">
+        <button type="submit" id="chatSend">Send</button>
+      </form>
+      <div class="row"><span class="note" id="commsNote">They remember your name, what you talked about and how you treated them.</span><span class="spacer"></span><button class="ghost" id="commsClose">End call</button></div>
+    </div>
+  </div>
+
+  <!-- map -->
+  <div id="map" class="modal" hidden>
+    <div class="sheet wide">
+      <div class="row"><h2>Galaxy map</h2><span class="spacer"></span><span class="label" id="mapHint"></span></div>
+      <canvas id="mapCanvas" width="1600" height="1000"></canvas>
+      <div class="row">
+        <span id="mapInfo" class="note"></span>
+        <span class="spacer"></span>
+        <button class="ghost" id="mapClose">Close</button>
+        <button id="warpBtn" disabled>Engage FTL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- station -->
+  <div id="station" class="modal" hidden>
+    <div class="sheet wide">
+      <div class="row"><span class="label" id="stationFaction"></span><span class="spacer"></span><span class="chip amber" id="stationCredits"></span></div>
+      <h2 id="stationName"></h2>
+      <div class="tabs" role="tablist">
+        <button role="tab" data-tab="services" aria-selected="true">Services</button>
+        <button role="tab" data-tab="outfit" aria-selected="false">Outfitting</button>
+        <button role="tab" data-tab="contracts" aria-selected="false">Contracts</button>
+      </div>
+      <div class="list" id="stationBody"></div>
+      <div class="row"><span class="note">Docked. Shields and systems are safe while you are here.</span><span class="spacer"></span><button id="undockBtn">Undock</button></div>
+    </div>
+  </div>
+
+  <!-- codex -->
+  <div id="codexPanel" class="modal" hidden>
+    <div class="sheet wide">
+      <div class="row"><h2>Codex</h2><span class="spacer"></span><button class="ghost" id="codexClose">Close</button></div>
+      <div class="tabs" role="tablist">
+        <button role="tab" data-ctab="chronicle" aria-selected="true">Chronicle</button>
+        <button role="tab" data-ctab="worlds" aria-selected="false">Worlds</button>
+        <button role="tab" data-ctab="bestiary" aria-selected="false">Bestiary</button>
+        <button role="tab" data-ctab="pilot" aria-selected="false">Pilot</button>
+      </div>
+      <div class="list" id="codexBody"></div>
+    </div>
+  </div>
+
+  <!-- landing report -->
+  <div id="report" class="modal" hidden>
+    <div class="sheet">
+      <span class="label">Surface survey</span>
+      <h2 id="reportTitle"></h2>
+      <div class="list" id="reportBody"></div>
+      <div class="row"><span class="note">Press <kbd>C</kbd> near a creature to catalogue it. Hover slowly next to a grazer and hold <kbd>E</kbd> to tame it. Press <kbd>L</kbd> to take off.</span><span class="spacer"></span><button id="reportClose">Explore</button></div>
+    </div>
+  </div>
+
+  <!-- death -->
+  <div id="dead" class="modal" hidden>
+    <div class="sheet">
+      <span class="label" style="color:var(--danger)">Hull breach</span>
+      <h2>Ship destroyed</h2>
+      <p id="deadText">Salvage drones tow what is left of you to the nearest station. The insurance covers the hull. It does not cover your pride.</p>
+      <div class="row"><button id="respawnBtn">Relaunch</button></div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

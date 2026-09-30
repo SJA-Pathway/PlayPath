@@ -2,7 +2,9 @@
 
 > An AI-driven open-world space RPG where every alien is alive, every planet is unique, and the galaxy keeps moving without you.
 
-Built for the **web**: runs in any modern browser with **Three.js (WebGL)** and **TypeScript**, with no install or plugin needed. Powered by LLMs, in-browser ML, and a community of open-source creators.
+Built for the **web**: a **Three.js + TypeScript** game client and a **Cloudflare Workers** backend. It runs in any modern browser with no install or plugin. Powered by Claude, procedural simulation, and a community of open-source creators.
+
+### ▶️ Play now: **[playpath.sjapathway.com](https://playpath.sjapathway.com)**
 Hosted under **[PlayPath by SJA Pathway](#-about-playpath)** — a free, open game development platform.
 
 [![Kanban Board](https://img.shields.io/badge/Kanban-100%20issues%20across%2010%20epics-0e1116?style=for-the-badge&logo=github)](https://github.com/SJA-Pathway/PlayPath/issues) [![Project Board](https://img.shields.io/badge/Project-Board-1d76db?style=for-the-badge&logo=github)](https://github.com/orgs/SJA-Pathway/projects/2) [![Three.js](https://img.shields.io/badge/Three.js-WebGL-049ef4?style=for-the-badge&logo=threedotjs)](https://threejs.org/) [![TypeScript](https://img.shields.io/badge/TypeScript-Vite-3178c6?style=for-the-badge&logo=typescript)](https://vitejs.dev/) [![License](https://img.shields.io/badge/License-Open%20Source-0e8a16?style=for-the-badge)](#)
@@ -27,31 +29,28 @@ NEXUS pushes AI integration further than anything in the genre. A galaxy where:
 
 ---
 
-## 🕹️ Play the Web Demo
+## 🕹️ Playable Build (v0.2)
 
-A basic, playable prototype lives at [`projects/nexus-sentient-galaxy/demo/index.html`](projects/nexus-sentient-galaxy/demo/index.html). It is one self-contained HTML file that loads Three.js from a CDN, so there is no build step.
+**Live:** https://playpath.sjapathway.com · **Source:** [`projects/nexus-sentient-galaxy/`](projects/nexus-sentient-galaxy/)
 
-**What works in the demo (v0.1):**
-- Third-person ship flight with throttle, pitch, yaw, boost and a chase camera
-- 34 seeded star systems on a clickable star map, with FTL jumps between them
-- Procedural planets in six biomes (lava, ice, ocean, jungle, desert, gas giant) with generated textures, atmospheres, rings and lore
-- Planet scanning that writes discoveries to a live Codex log
-- Alien comms: every planet has a named alien with a faction and a temperament. They remember your name, your visits, what you talked about and how you treated them. This is stored in the browser with `localStorage`.
-- Pirate drones that steer, orbit and fire leading shots, with lasers, shields, hull, bounties and salvage
-- A simple Game Master that spawns raids, derelicts, flares and rumours on a tension curve and backs off when you are hurt
-- Adaptive Web Audio music that retunes per system and intensifies in combat, plus synthesized SFX
-- A radar, a HUD and touch controls for phones
+This is a real game project, not a mock-up. It has a typed TypeScript codebase, a Vite build, custom GLSL shaders, and a server on Cloudflare's edge. Here is what you can do today:
 
-**Stand-ins in the demo:** the alien dialogue uses an offline keyword model instead of a real LLM. The Game Master is a heuristic, not an AI agent. Enemies use scripted steering, not trained ML models. There is no multiplayer and no backend yet. Each of these maps to an epic below.
+| Pillar | In the build now |
+|---|---|
+| 🪐 **Explore** | 48 seeded star systems on jump lanes across three faction territories. GPU-shaded planets in seven biomes with animated clouds, atmospheric scattering rims, city lights on the night side, lava cracks and flowing gas-giant storms. Instanced asteroid belts, planetary rings, a procedural nebula sky, and FTL jumps with mass-lock. |
+| 🛸 **Fight** | Flight assist on or off (true Newtonian drift), strafing, roll and boost. Pulse lasers with a heat and overheat model. Target cycling with missile lock-on, homing missiles and swept-sphere hit detection. Five hull types (interceptor, drone, gunship, patrol, freighter) and HDR bloom explosions. |
+| 🤖 **Enemy AI** | Utility AI that scores attack, flee, regroup, escort and patrol every few hundred milliseconds. Pilots fly attack runs (approach, fire with lead, overshoot, extend, re-engage), jink under fire, retreat when damaged, and fly in squads with leaders. Concord patrols fight pirates alongside you, and fire back if you shoot them. |
+| 🧠 **Talk** | Every planet has a named alien with a species, faction and one of six temperaments. **No API key needed:** conversations run on a built-in dialogue dataset ([`src/npc/lines.ts`](projects/nexus-sentient-galaxy/src/npc/lines.ts)). It understands about 20 topics (your name, trade, pirates, jobs, rumours, history, jokes, insults and more), gives each temperament its own voice, avoids repeating itself, and shifts tone with reputation. Aliens remember your name and what you did, trade for your scan data, tip bounties, send gifts to friends, and **gossip about you** to others in their faction. Optional: set an Anthropic key and the same aliens switch to Claude. |
+| 🦎 **Land, Hunt & Tame** | Land on any rocky world. Each has a 4 km heightfield with biome colouring, water or lava, fog, flora and a live ecosystem. Grazers herd using boids and flee; predators hunt and eat them. **Species evolve between visits:** predation pressure changes speed, size, colour and boldness, and the landing report explains why. Catalogue species for the bestiary, or tame a grazer so it follows you on every return. |
+| 🎭 **Game Master** | A tension-curve director, the same idea as Left 4 Dead's AI Director. It compares what you are going through with a pacing wave and escalates (raids, gunship wings, convoy ambushes) or relieves (derelict salvage, patrol arrivals, rumours). The **Codex** writes a chronicle of everything that happens. |
+| 💼 **Economy** | Stations sell repair, rearming and four upgrade lines of three levels each. A contract board offers bounty, survey, courier and fauna jobs. Faction reputation changes prices and who shoots at you. |
+| 🌐 **Play Together** | Live multiplayer: one **Durable Object** room per star system over WebSockets. You see other pilots fly and fire, with 10 Hz snapshots and interpolation. Press Enter to send system chat. |
+| 🎵 **Audio** | Fully procedural Web Audio: a pad, arpeggio and pulse score whose key follows the star system and whose intensity follows combat, plus synthesized SFX with distance attenuation. |
+| 📱 **Everywhere** | Keyboard and mouse (pointer-lock virtual stick), or touch with a virtual joystick and buttons. Rendering quality adapts automatically. Progress saves in the browser. |
 
-**Run it locally:**
-```bash
-cd projects/nexus-sentient-galaxy/demo
-npx serve .        # or: python3 -m http.server 8080
-```
-Then open the printed URL. You can also double-click `index.html`.
+**Controls:** Mouse steer (click to capture) or `↑↓←→` · `W`/`S` throttle · `A`/`D` strafe · `Q`/`E` roll · `Shift` boost · `Z` flight assist · `Space`/LMB lasers · `F`/RMB missile · `Tab` target · `C` scan · `T` hail · `E` dock / tame · `L` land / take off · `M` galaxy map · `K` codex · `Enter` chat · `N` mute
 
-**Controls:** `↑` `↓` throttle · `W` `S` pitch · `A` `D` turn · `Shift` boost · `Space` fire · `C` scan · `T` hail · `M` star map · `N` mute · `Esc` close panels
+**Still to build (from the backlog):** trained ML wildlife policies (the current ecosystem is rule-based), voice chat with aliens, ship boarding, a persistent server-side economy and guilds, and cloud saves through Supabase.
 
 ---
 
@@ -75,7 +74,7 @@ Alien wildlife is driven by **reinforcement-learning policies trained offline an
 An **AI Game Master** orchestrates the galaxy. It watches your playstyle, reads narrative tension curves, and spawns dynamic events — wars, plagues, discoveries — and proposes quests fitted to your archetype. Choices ripple: kill a faction leader and the economy and diplomacy actually shift. A **Codex** auto-writes itself with everything you witness, so your playthrough is its own book.
 
 ### 🌐 Play Together
-**WebSocket multiplayer** (Colyseus) with **proximity voice chat**. The universe is persistent and **shared** — civilizations evolve while you're offline. Trade in a server-authoritative **marketplace**, form **guilds and fleets** with shared treasuries and quests.
+**WebSocket multiplayer** (Cloudflare Durable Objects, one room per star system) with **proximity voice chat**. The universe is persistent and **shared** — civilizations evolve while you're offline. Trade in a server-authoritative **marketplace**, form **guilds and fleets** with shared treasuries and quests.
 
 > Every line above maps to issues on the [Kanban backlog](https://github.com/SJA-Pathway/PlayPath/issues) — filter by `epic:galaxy-gen`, `epic:ship-combat`, `epic:ai-npc`, `epic:ecosystem-ml`, `epic:ai-gm`, or `epic:multiplayer`.
 
@@ -91,37 +90,65 @@ An **AI Game Master** orchestrates the galaxy. It watches your playstyle, reads 
 
 ## 🧩 Tech Stack
 
-NEXUS moved from Unity to a **browser-native stack**. Everything runs on the open web, deploys as static files and a few serverless functions, and needs no engine license or plugin.
+NEXUS moved from Unity to a **browser-native stack**. The client is static files, and the server is a single Cloudflare Worker. There is no engine license, no plugin and no install.
 
-| Layer              | Technology                                   | Replaces (Unity plan)          | Notes                                               |
-|--------------------|----------------------------------------------|--------------------------------|-----------------------------------------------------|
-| Rendering          | **Three.js** (WebGL 2, WebGPU when ready)    | Unity URP                      | Scenes, materials, post-processing, instancing      |
-| Language / build   | **TypeScript + Vite**                        | C#                             | Fast dev server, code-splitting, asset hashing      |
-| Physics            | **Rapier** (WASM)                            | Unity physics                  | Deterministic rigid bodies for ships and boarding   |
-| UI / HUD           | HTML/CSS overlay (Preact or plain DOM)       | uGUI                           | Accessible, themable, works on mobile               |
-| Multiplayer        | **Colyseus** (WebSocket, server-authoritative) | Photon / Mirror             | Rooms per star system, state sync, marketplace      |
-| Backend / data     | **Supabase** (Postgres, Auth, Realtime, Storage) | Firebase / PlayFab         | Saves, factions, codex, NPC memory (pgvector)       |
-| LLM NPCs & AI GM   | **Claude API** via serverless proxy          | same                           | Keys never reach the browser; tool use for the GM   |
-| ML wildlife        | **ONNX Runtime Web / TensorFlow.js**         | Unity ML-Agents                | Train offline in Python, run policies in-browser    |
-| Audio              | **Web Audio API + Tone.js**                  | FMOD / Wwise                   | Adaptive layers, per-planet themes, spatial audio   |
-| Voice (STT/TTS)    | Web Speech API → Whisper / ElevenLabs        | same                           | Browser speech first, cloud models for quality      |
-| Voice chat         | WebRTC (LiveKit)                             | Photon Voice                   | Proximity chat between players                      |
-| Assets             | Blender → **glTF/GLB**, KTX2 textures        | FBX / Unity assets             | Draco/Meshopt compression for fast loads            |
-| Hosting            | GitHub Pages / Vercel / Cloudflare Pages     | itch.io WebGL build            | Static game + edge functions for APIs               |
-| Version control    | GitHub                                       | same                           | Free public repositories                            |
+| Layer | Technology | Status | Replaces (Unity plan) |
+|---|---|---|---|
+| Rendering | **Three.js 0.170** (WebGL 2), custom GLSL shaders, `EffectComposer` + `UnrealBloomPass`, ACES tone mapping | ✅ In build | Unity URP |
+| Language / build | **TypeScript 5 (strict) + Vite 6** | ✅ In build | C# |
+| Game server | **Cloudflare Workers** (static assets + API routes) | ✅ In build | Dedicated servers |
+| Multiplayer | **Durable Objects** + WebSocket Hibernation API, one room per system | ✅ In build | Photon / Mirror |
+| Alien dialogue | Built-in data-driven dialogue engine (intents, per-temperament lines, memory, gossip) | ✅ In build, no key needed | — |
+| LLM NPCs (optional) | **Claude API** (`@anthropic-ai/sdk`, `claude-opus-5`, structured outputs) called from the Worker so the key never reaches the browser | 💤 Off until a key is set | — |
+| AI Game Master | Tension-curve director (TypeScript) | ✅ In build; Claude-planned quests next | — |
+| Enemy AI | Utility AI + steering behaviours | ✅ In build | Unity AI |
+| Wildlife | Boids, predator/prey state machines, genome evolution per visit | ✅ In build; ONNX Runtime Web RL policies next | Unity ML-Agents |
+| Audio | **Web Audio API** (procedural score + SFX) | ✅ In build | FMOD / Wwise |
+| Saves | `localStorage` | ✅ In build; **Supabase** cloud saves next | Firebase / PlayFab |
+| Physics | Custom arcade/Newtonian flight model; **Rapier** (WASM) planned for boarding | 🟡 Partial | Unity physics |
+| Voice | Web Speech API → Whisper / ElevenLabs | ⏳ Planned | — |
+| Assets | Procedural today; Blender → **glTF/GLB** + KTX2 next | 🟡 Partial | FBX / Unity assets |
+
+### Project layout
+```
+projects/nexus-sentient-galaxy/
+├── index.html              # HUD + panel markup
+├── src/
+│   ├── main.ts             # entry (WebGL 2 check → Game)
+│   ├── game.ts             # orchestrator: modes, spawning, docking, landing, FTL, death
+│   ├── core/               # seeded RNG + noise, input (keyboard/mouse/touch), saves, event bus
+│   ├── render/             # renderer + bloom pipeline, GLSL planet/cloud/atmosphere/star/sky shaders
+│   ├── world/              # galaxy + faction data, star-system scene (planets, belt, station)
+│   ├── ships/              # ship models + flight model, combat (lasers/missiles/FX), utility AI
+│   ├── surface/            # planet landing: terrain, flora, ecosystem, evolution
+│   ├── npc/                # Claude dialogue client + offline fallback model
+│   ├── gm/                 # Game Master director + contracts
+│   ├── net/                # multiplayer client
+│   ├── audio/              # procedural music + SFX
+│   └── ui/                 # HUD, panels, styles
+├── worker/
+│   ├── index.ts            # /api/health, /api/npc (Claude), /api/rt/<system> (WebSocket)
+│   └── room.ts             # SystemRoom Durable Object
+└── wrangler.toml           # Worker, assets, Durable Object, custom domain
+```
 
 ---
 
 ## 🛠️ Getting Started
-1. **Fork** this repository.
-2. **Clone** your fork:
-   ```bash
-   git clone https://github.com/yourusername/playpath.git
-   cd playpath
-   ```
-3. Play the prototype: `cd projects/nexus-sentient-galaxy/demo && npx serve .`
-4. For the full game (once `epic:foundation` lands): `cd projects/nexus-sentient-galaxy && npm install && npm run dev`, then open `http://localhost:5173`.
-5. Requirements: Node.js 20+ and a browser with WebGL 2 (any current Chrome, Edge, Firefox or Safari).
+Requirements: **Node.js 22+** and a browser with WebGL 2 (any current Chrome, Edge, Firefox or Safari).
+
+```bash
+git clone https://github.com/SJA-Pathway/PlayPath.git
+cd PlayPath/projects/nexus-sentient-galaxy
+npm install
+npm run build && npx wrangler dev   # full game + multiplayer + API on http://localhost:8787
+# or, for fast UI/graphics iteration with hot reload (solo, offline NPCs):
+npm run dev                         # http://localhost:5173
+```
+
+No API keys are required. The aliens use the built-in dialogue data. (Optional: to try Claude-powered aliens locally, put `ANTHROPIC_API_KEY=...` in a git-ignored `.dev.vars`.)
+
+Handy while developing: the running game is exposed as `window.nexus` in the browser console (for example `nexus.spawnRaid(3, true)` or `nexus.jump(5)`).
 
 ---
 
@@ -129,17 +156,15 @@ NEXUS moved from Unity to a **browser-native stack**. Everything runs on the ope
 - 🌱 Beginners with some experience in JavaScript/TypeScript or Three.js are welcome.
 - 🧩 Pick an issue tagged with an `epic:*` label that interests you, comment to claim it, and open a PR.
 - 💬 Communicate via our Discord or GitHub discussions.
-- 🔍 Keep code in `projects/nexus-sentient-galaxy/src/{core,world,ships,npc,gm,net,ui,audio}` and assets in `public/assets/{models,textures,audio}` (glTF, KTX2, OGG).
+- 🔍 Put code in the matching `src/` module (see *Project layout*) and assets in `public/assets/{models,textures,audio}` (glTF, KTX2, OGG). Run `npm run typecheck` before opening a PR.
 
 ---
 
 ## ☁️ Deployment
-- **Live demo:** https://playpath.sjapathway.com, a Cloudflare Worker (`sja-playpath`) serving `demo/` as static assets. Redeploy with `npx wrangler deploy` from `projects/nexus-sentient-galaxy/` (Node 22+).
-- Full game: push to `main` → build with Vite and deploy the same way.
-- Serverless API routes (LLM proxy, GM orchestrator) deploy to **Vercel** or **Cloudflare Workers**.
-- The multiplayer server (Colyseus) runs on any Node host (Fly.io, Railway, a small VPS).
-- Player data lives in **Supabase**.
-- The static demo in `demo/` can be hosted anywhere as-is, including GitHub Pages and itch.io's HTML5 upload.
+- **Production:** https://playpath.sjapathway.com is the Cloudflare Worker `sja-playpath`. It serves the Vite build from `dist/`, and `/api/*` is handled by `worker/index.ts`.
+- **Deploy:** run `npm run deploy` from `projects/nexus-sentient-galaxy/` (Node 22+, `wrangler login`). `npm run deploy:dev` deploys `sja-playpath-dev` on workers.dev without touching the custom domain.
+- **No secrets needed.** The game runs fully without an API key. Optional: `npx wrangler secret put ANTHROPIC_API_KEY` switches aliens to Claude (`GET /api/health` then reports `"npc": true`).
+- **Multiplayer** needs no extra setup: the `SystemRoom` Durable Object is declared in `wrangler.toml` (SQLite-backed, works on the free plan).
 
 ---
 
@@ -149,7 +174,7 @@ NEXUS development is structured as **10 epics, 100 issues**. Phases are guidance
 
 | Phase | Epic                  | Focus                                                            |
 |------:|-----------------------|------------------------------------------------------------------|
-| 1     | `epic:foundation`     | Vite + TS + Three.js project, save/load, input, services, asset loading |
+| 1     | `epic:foundation`     | Vite + TS + Three.js project, save/load, input, services, asset loading ✅ |
 | 2     | `epic:galaxy-gen`     | Procedural galaxy, planets, biomes, atmospheres, AI lore         |
 | 3     | `epic:ship-combat`    | Ship building, 6DoF flight, FTL, weapons, enemy AI, boarding     |
 | 4     | `epic:ai-npc`         | LLM NPCs with memory, factions, alien language, moderation       |
@@ -157,7 +182,7 @@ NEXUS development is structured as **10 epics, 100 issues**. Phases are guidance
 | 6     | `epic:ai-gm`          | AI Game Master, dynamic quests, world events, codex              |
 | 7     | `epic:ui-ux`          | Holographic HUD, star map, photo mode, accessibility, i18n       |
 | 8     | `epic:audio`          | Web Audio/Tone.js, adaptive music, AI voices, STT, mix states    |
-| 9     | `epic:multiplayer`    | Colyseus, persistent universe, guilds, marketplace, WebRTC voice |
+| 9     | `epic:multiplayer`    | Durable Object rooms ✅, persistent universe, guilds, marketplace, WebRTC voice |
 | 10    | `epic:polish-ship`    | CI/CD, optimization, alpha test, trailer, store pages, v1.0      |
 
 ---
@@ -178,7 +203,7 @@ Each project lives under `projects/<project-name>` within the same repository an
 
 - 🏎️ **RaceArena** – 2D/3D racing game with multiple tracks and vehicles
 - 🧩 **PuzzleBox** – Logic and puzzle-solving game with levels
-- ⚔️ **BattleZone** – Multiplayer battle arena over WebSockets (Colyseus)
+- ⚔️ **BattleZone** – Multiplayer battle arena over WebSockets (Durable Objects)
 - 🏰 **AdventureQuest** – 3D exploration and quest-based game
 - 🎯 **MiniGamesHub** – Collection of small casual browser games in one hub
 

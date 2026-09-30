@@ -1,10 +1,14 @@
-# NEXUS web demo — static assets served by a Cloudflare Worker.
+# NEXUS — Cloudflare Worker: serves the Vite build (./dist) and the game API.
+#   /api/npc        → Claude-powered alien dialogue (needs `wrangler secret put ANTHROPIC_API_KEY`)
+#   /api/rt/<sys>   → WebSocket multiplayer room (one Durable Object per star system)
 # Deploy (Node 22+, `wrangler login`):
-#   npx wrangler deploy            # production → playpath.sjapathway.com
-#   npx wrangler deploy --env dev  # dev worker on workers.dev
+#   npm run deploy         # production → playpath.sjapathway.com
+#   npm run deploy:dev     # dev worker on workers.dev
 
 name = "sja-playpath"
-compatibility_date = "2024-09-23"
+main = "worker/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
 routes = [
@@ -12,7 +16,18 @@ routes = [
 ]
 
 [assets]
-directory = "./demo"
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "SystemRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SystemRoom"]
 
 [env.dev]
 name = "sja-playpath-dev"
@@ -20,4 +35,11 @@ workers_dev = true
 routes = []
 
 [env.dev.assets]
-directory = "./demo"
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[[env.dev.durable_objects.bindings]]
+name = "ROOMS"
+class_name = "SystemRoom"
